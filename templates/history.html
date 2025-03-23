@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Lịch Sử Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Lịch Sử Bài Kiểm Tra</h1>
+
+    {% if quizzes %}
+        <div class="quiz-history">
+            {% for quiz in quizzes %}
+                <div class="quiz-card">
+                    <div class="quiz-info">
+                        <h3>{{ quiz.title }}</h3>
+                        <p><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><strong>Trạng thái:</strong> {{ quiz.status }}</p> <!-- Trạng thái có thể là "Đã hoàn thành", "Đang làm bài", v.v. -->
+                    </div>
+                    <div class="quiz-actions">
+                        <a href="{{ url_for('quiz_detail', quiz_id=quiz.id) }}" class="btn btn-info">
+                            Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Chưa có bài kiểm tra nào.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+<style>
+.quiz-history {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.quiz-card {
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+.quiz-info h3 {
+    color: #333;
+}
+
+.quiz-info p {
+    color: #666;
+}
+
+.quiz-actions {
+    margin-top: 20px;
+}
+
+.quiz-actions .btn-info {
+    background-color: #5bc0de;
+    border: none;
+    color: #fff;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+.quiz-actions .btn-info:hover {
+    background-color: #31b0d5;
+}
+</style>

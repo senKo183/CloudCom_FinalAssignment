@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Trang Quản Lý Giáo Viên{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Quản lý bài kiểm tra</h1>
+    
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Tổng số bài kiểm tra</h3>
+            <p class="stat-number">{{ total_quizzes }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Học sinh đã làm bài</h3>
+            <p class="stat-number">{{ total_students }}</p>
+        </div>
+    </div>
+
+    <div class="dashboard-actions">
+        <div class="action-card">
+            <h2>Tạo Bài Kiểm Tra Mới</h2>
+            <a href="{{ url_for('create_quiz') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tạo Bài Kiểm Tra
+            </a>
+        </div>
+        
+        <div class="action-card">
+            <h2>Quản Lý Bài Kiểm Tra</h2>
+            <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+                <i class="fas fa-list"></i> Xem Danh Sách
+            </a>
+        </div>
+    </div>
+
+    <div class="recent-quizzes">
+        <h2>Bài Kiểm Tra Gần Đây</h2>
+        <div class="quiz-list">
+            {% if recent_quizzes %}
+                {% for quiz in recent_quizzes %}
+                <div class="quiz-card">
+                    <h3>{{ quiz.title }}</h3>
+                    <p class="quiz-info-text">Thời gian bắt đầu: {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p class="quiz-info-text">Thời gian kết thúc: {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p class="quiz-info-text">Thời gian làm bài: {{ quiz.duration }} phút</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>Chưa có bài kiểm tra nào.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
