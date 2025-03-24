@@ -146,7 +146,7 @@ Liệt kê kế hoạch dự kiến trong 6 tuần
 - Cài đặt môi trường phát triển, thiết lập repo Git.
 - Xây dựng cơ sở dữ liệu
 - Viết API cho các chức năng chính: 
-  - ` `Đăng ký, đăng nhập (authentication).
+  - Đăng ký, đăng nhập (authentication).
   - Quản lý bài kiểm tra (CRUD bài kiểm tra, câu hỏi).
 - Thiết kế API rõ ràng, dễ hiểu và dễ sử dụng.
 - Áp dụng các biện pháp bảo mật cho API và cơ sở dữ liệu.
