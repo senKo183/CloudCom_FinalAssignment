@@ -219,7 +219,7 @@ body {
 }
 
 .action-card h2 {
-    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-family:'Times New Roman', Times, serif;
     margin-bottom: 1.5rem;
     color: var(--text-color);
 }
@@ -234,14 +234,16 @@ body {
     cursor: pointer;
 }
 .btn-primary {
-    background-color: #009e0d;
+    width: auto;
+    background-color: #0a963f !important;
 }
 .btn-danger {
     background-color: #db1c1c;
 }
 
 .btn-secondary {
-    background-color: #5c1cdb;
+    width: auto;
+    background-color: #6e2eec !important;
 }
 
 .recent-quizzes {
