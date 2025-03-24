@@ -51,7 +51,7 @@
 - Bắt đầu bài kiểm tra.
 - Trả lời câu hỏi (trắc nghiệm, điền đáp án, kéo thả, v.v.).
 - Nộp bài kiểm tra trước thời gian hoặc hệ thống tự động nộp khi hết giờ.
-- ` `**Xem kết quả**
+- **Xem kết quả**
 - Xem điểm số ngay sau khi nộp bài.
 - Xem đáp án đúng của từng câu hỏi (nếu giáo viên cho phép).
 - Xem lịch sử các bài kiểm tra đã làm.
