@@ -5,27 +5,35 @@
     --text-color: #333;
 }
 
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-
+html, body {
+    height: 100%;   /* Chiếm toàn bộ chiều cao màn hình */
+    margin: 0;    
+    display: flex;
+    flex-direction: column;
+}
 body {
     font-family: Arial, sans-serif;
     background-color: var(--background-color);
     color: var(--text-color);
     line-height: 1.6;
-    
+    height: 100%;
+    width: 100%;
+    margin: 0;
 }
 .logo {
-    font-size: 24px;
+    font-size: 30px;
     font-weight: bold;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #1d0d3a;
+    color: #2c027a;
 }
 
 
@@ -116,8 +124,10 @@ body {
 }
 
 .welcome-section h1 {
-    margin-bottom: 1.5rem;
-    color: var(--primary-color);
+    flex-grow: 1;  /* Nội dung chính sẽ chiếm không gian còn lại */
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .action-buttons {
@@ -260,6 +270,7 @@ body {
     margin-top: 1.5rem;
 }
 .quiz-card {
+    display: flexbox;
     background: #ffffff;
     padding: 1.5rem;
     border-radius: 10px;
@@ -336,54 +347,48 @@ body {
 
 /* Footer Styles */
 /* Đảm bảo toàn bộ trang sử dụng flexbox */
-html, body {
-    height: 100%;   /* Chiếm toàn bộ chiều cao màn hình */
-    margin: 0;    
-    display: flex;
-    flex-direction: column;
-}
 
+/* Định kiểu footer */
+footer {
+    background-color: rgb(149, 146, 150); /* Màu nền của footer */
+    color: rgb(10, 10, 10);
+    text-align: center;
+    padding: 10px 40px;
+    width: 100%;
+    margin-top: auto;  /* Đẩy footer xuống dưới cùng */
+    position: relative;  /* Đảm bảo footer không bị chồng lên nội dung khác */
+}
 /* Nội dung chính */
 .main-content {
+    height: 100%;   /* Chiếm toàn bộ chiều cao màn hình */
+    margin: 0;    
+    width: 100%;
     flex: 1; /* Chiếm phần còn lại của không gian */
 }
 
-/* Footer */
-/* Đảm bảo html và body chiếm toàn bộ chiều cao */
-html, body {
-    height: 100%;   /* Chiếm toàn bộ chiều cao màn hình */
-    margin: 0;      /* Loại bỏ margin mặc định */
-    display: flex;
-    flex-direction: column;  /* Xây dựng theo cột */
-}
 
-/* Bao bọc nội dung chính */
+/* Thiết lập main-container để sử dụng flex */
 .main-container {
-    flex: 1;  /* Chiếm phần còn lại của không gian */
+    width: 100%;
     display: flex;
-    flex-direction: column; /* Nội dung chính được tổ chức theo cột */
+    flex-direction: column;
+    min-height: 100%; /* Đảm bảo container chính chiếm toàn bộ chiều cao */
 }
 
 /* Nội dung chính */
 .welcome-section {
-    flex: 1;  /* Nội dung chính sẽ chiếm không gian còn lại */
+    flex-grow: 1;  /* Nội dung chính sẽ chiếm không gian còn lại */
     padding: 20px;
-}
-
-/* Footer */
-footer {
-    background-color:rgb(149, 146, 150);  /* Màu nền của footer */
-    color: rgb(10, 10, 10);
-    text-align: center;
-    padding: 20px 0;
     width: 100%;
-    margin-top: auto;  /* Đẩy footer xuống dưới cùng */
+    box-sizing: border-box;
 }
 
-.footer-content {
+
+/* Nội dung trong footer */
+/* .footer-content {
     max-width: 1200px;
     margin: 0 auto;
-}
+} */
 
 footer p {
     font-size: 14px;
@@ -576,7 +581,7 @@ p a:hover {
 }
 
 .quiz-btn:hover {
-    background-color: #0056b3;
+    background-color: #bd198c;
 }
 
 /* Form container căn giữa và làm đẹp */
@@ -595,3 +600,5 @@ p a:hover {
     margin-left: 15px;
     margin-right: 15px;
 }
+
+
