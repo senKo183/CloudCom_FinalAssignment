@@ -5,15 +5,17 @@ import os
 from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Models
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer , primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
@@ -66,7 +68,7 @@ def login():
             session['user_id'] = user.id
             session['role'] = user.role
             session['username'] = user.username
-            flash('Đăng nhập thành công!')
+            flash('Đăng nhập thành công!',"success")
             
             # Chuyển hướng dựa trên role
             if user.role == 'teacher':

@@ -40,9 +40,9 @@
                 {% for quiz in recent_quizzes %}
                 <div class="quiz-card">
                     <h3>{{ quiz.title }}</h3>
-                    <p class="quiz-info-text">Thời gian bắt đầu: {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p class="quiz-info-text">Thời gian kết thúc: {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p class="quiz-info-text">Thời gian làm bài: {{ quiz.duration }} phút</p>
+                    <p class="quiz-info-text"><b>Thời gian bắt đầu:</b> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p class="quiz-info-text"><b>Thời gian kết thúc:</b> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                    <p class="quiz-info-text"><b>Thời gian làm bài:</b> {{ quiz.duration }} phút</p>
                 </div>
                 {% endfor %}
             {% else %}
