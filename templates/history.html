@@ -1,70 +1,369 @@
 {% extends "base.html" %}
 
-{% block title %}Lịch Sử Bài Kiểm Tra{% endblock %}
+{% block title %}Lịch sử bài kiểm tra{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>Lịch Sử Bài Kiểm Tra</h1>
+<div class="container">
+    <div class="page-header">
+        <h1>Lịch sử bài kiểm tra</h1>
+    </div>
 
-    {% if quizzes %}
-        <div class="quiz-history">
-            {% for quiz in quizzes %}
-                <div class="quiz-card">
-                    <div class="quiz-info">
-                        <h3>{{ quiz.title }}</h3>
-                        <p><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                        <p><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                        <p><strong>Trạng thái:</strong> {{ quiz.status }}</p> <!-- Trạng thái có thể là "Đã hoàn thành", "Đang làm bài", v.v. -->
-                    </div>
-                    <div class="quiz-actions">
-                        <a href="{{ url_for('quiz_detail', quiz_id=quiz.id) }}" class="btn btn-info">
-                            Xem chi tiết
-                        </a>
+    {% if session.role == 'student' %}
+        {% if results %}
+            <div class="row mb-5">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <canvas id="scoreChart"></canvas>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <canvas id="averageChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tên bài kiểm tra</th>
+                            <th>Điểm số</th>
+                            <th>Ngày nộp bài</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.quiz.title }}</td>
+                            <td class="score-cell">{{ "%.2f"|format(result.score) }}/10</td>
+                            <td>{{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-history fa-3x"></i>
+                <p>Bạn chưa tham gia bài kiểm tra nào.</p>
+            </div>
+        {% endif %}
     {% else %}
-        <p>Chưa có bài kiểm tra nào.</p>
+        {% if quizzes %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tên bài kiểm tra</th>
+                            <th>Thời gian bắt đầu</th>
+                            <th>Thời gian kết thúc</th>
+                            <th>Số học sinh đã nộp</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quiz in quizzes %}
+                        <tr>
+                            <td>{{ quiz.title }}</td>
+                            <td>{{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td class="submissions-cell">{{ quiz.results|length }}</td>
+                            <td class="actions-cell">
+                                <a href="{{ url_for('view_quiz', quiz_id=quiz.id) }}" class="btn btn-info">
+                                    <i class="fas fa-eye"></i> Chi tiết
+                                </a>
+                                <a href="{{ url_for('quiz_students', quiz_id=quiz.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-users"></i> Danh sách học sinh
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list fa-3x"></i>
+                <p>Bạn chưa tạo bài kiểm tra nào.</p>
+            </div>
+        {% endif %}
     {% endif %}
 </div>
-{% endblock %}
 
 <style>
-.quiz-history {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+.page-header {
+    background: linear-gradient(135deg, #4b6cb7 0%, #3a2d68 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.quiz-card {
-    background: #fff;
+.page-header h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.chart-container {
+    background: white;
     padding: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    height: 300px;
+    transition: transform 0.2s;
 }
 
-.quiz-info h3 {
-    color: #333;
+.chart-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-.quiz-info p {
-    color: #666;
+.table-container {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
-.quiz-actions {
-    margin-top: 20px;
+.table {
+    margin: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-.quiz-actions .btn-info {
-    background-color: #5bc0de;
-    border: none;
-    color: #fff;
+.table thead th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 15px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.score-cell {
+    font-weight: 600;
+    color: #28a745;
+    font-size: 16px;
+}
+
+.submissions-cell {
+    font-weight: 600;
+    color: #4b6cb7;
+    font-size: 16px;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
     padding: 8px 16px;
-    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
 }
 
-.quiz-actions .btn-info:hover {
-    background-color: #31b0d5;
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #0c4750 100%);
+    color: white;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4b6cb7 0%, #d62edb 100%);
+    color: white;
+    border: none;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.empty-state i {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.empty-state p {
+    color: #495057;
+    font-size: 18px;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: 250px;
+    }
+    
+    .actions-cell {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .table thead {
+        display: none;
+    }
+    
+    .table tbody td {
+        font-size: 20px;
+        font-style: bold;
+        display: block;
+        text-align: right;
+        padding: 10px 15px;
+    }
+    
+    .table tbody td:before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 600;
+        color: #495057;
+    }
 }
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Truyền dữ liệu từ Flask sang JavaScript
+    const quizData = {
+        results: [
+            {% if session.role == 'student' and results %}
+                {% for result in results %}
+                    {
+                        title: "{{ result.quiz.title }}",
+                        score: {{ result.score }},
+                        submitted_at: "{{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}"
+                    }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            {% endif %}
+        ]
+    };
+
+    // Khởi tạo biểu đồ điểm số
+    const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+    new Chart(scoreCtx, {
+        type: 'line',
+        data: {
+            labels: quizData.results.map(result => result.title),
+            datasets: [{
+                label: 'Điểm số',
+                data: quizData.results.map(result => result.score),
+                borderColor: '#4b6cb7',
+                backgroundColor: 'rgba(75, 108, 183, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Biểu đồ điểm số theo thời gian',
+                    font: { size: 16 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 10
+                }
+            }
+        }
+    });
+
+    // Khởi tạo biểu đồ phân phối điểm
+    const averageCtx = document.getElementById('averageChart').getContext('2d');
+    const scores = quizData.results.map(result => result.score);
+    const scoreRanges = {
+        '0-2': scores.filter(score => score >= 0 && score < 2).length,
+        '2-4': scores.filter(score => score >= 2 && score < 4).length,
+        '4-6': scores.filter(score => score >= 4 && score < 6).length,
+        '6-8': scores.filter(score => score >= 6 && score < 8).length,
+        '8-10': scores.filter(score => score >= 8 && score <= 10).length
+    };
+
+    new Chart(averageCtx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(scoreRanges),
+            datasets: [{
+                label: 'Số lượng bài kiểm tra',
+                data: Object.values(scoreRanges),
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(255, 159, 64, 0.5)',
+                    'rgba(255, 205, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(54, 162, 235, 0.5)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(255, 159, 64)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(54, 162, 235)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân phối điểm số',
+                    font: { size: 16 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

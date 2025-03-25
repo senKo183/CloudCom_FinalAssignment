@@ -16,10 +16,22 @@
         {% else %}
             <p class="welcome-message">Xin chào, <b>{{ session['username'] }}</b>!</p>
             <div class="container mt-4"> 
+                <!-- Form tìm kiếm bài kiểm tra -->
+                <form action="{{ url_for('search_quiz') }}" method="GET" class="search-form">
+                    <div class="search-container">
+                        <input type="text" name="keyword" class="search-input" 
+                               placeholder="Tìm kiếm bài kiểm tra..." required>
+                        <button type="submit" class="search-btn">
+                            <i class="fas fa-search"></i> Tìm kiếm
+                        </button>
+                    </div>
+                </form>
+
                 <!-- Form nhập mã bài kiểm tra và nút tham gia -->
                 <form method="POST" class="quiz-join-form">
                     <div class="input-container">
-                        <input type="text" id="quiz_code" name="quiz_code" class="quiz-input" placeholder="Nhập mã tham gia" required>
+                        <input type="text" id="quiz_code" name="quiz_code" 
+                               class="quiz-input" placeholder="Nhập mã tham gia" required>
                         <button type="submit" class="quiz-btn">Tham gia</button>
                     </div>
                 </form>
@@ -40,4 +52,43 @@
         </div>
     </div>
 </footer> -->
+
+<style>
+.search-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-width: 600px;
+    margin: 0 auto 20px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    border-radius: 15px;
+    font-size: 16px;
+}
+
+.search-btn {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.search-btn:hover {
+    background-color: #45a049;
+}
+
+.input-container {
+    margin-top: 20px;
+}
+</style>
 {% endblock %}

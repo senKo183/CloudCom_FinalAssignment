@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Kết quả tìm kiếm{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4">Kết quả tìm kiếm cho "{{ keyword }}"</h1>
+
+    {% if quizzes %}
+        <div class="row">
+            {% for quiz in quizzes %}
+            <div class="col-md-6 mb-4">
+                <div class="quiz-card">
+                    <div class="quiz-header">
+                        <h3>{{ quiz.title }}</h3>
+                        <p class="teacher-name">Giáo viên: {{ quiz.teacher.username }}</p>
+                    </div>
+                    <div class="quiz-info">
+                        <p><i class="fas fa-clock"></i> Thời gian: {{ quiz.duration }} phút</p>
+                        <p><i class="fas fa-calendar"></i> Bắt đầu: {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><i class="fas fa-calendar-check"></i> Kết thúc: {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                    </div>
+                    {% if session['role'] == 'student' %}
+                    <div class="quiz-actions">
+                        <form method="POST" action="{{ url_for('join_quiz', quiz_id=quiz.id) }}">
+                            <button type="submit" class="btn btn-join">Tham gia</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center">Không tìm thấy bài kiểm tra nào.</p>
+    {% endif %}
+</div>
+
+<style>
+.container {
+    margin-top: 30px;
+}
+
+.quiz-card {
+    background: linear-gradient(145deg, #ffffff, #f5f5f5);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(43, 63, 243, 0.5);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.quiz-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.quiz-header {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+}
+
+.quiz-header h3 {
+    color: #fdfdfd;
+    margin-bottom: 5px;
+    font-size: 1.4em;
+}
+
+.teacher-name {
+    color: #51076e;
+    font-size: 1em;
+    margin: 0;
+}
+
+.quiz-info {
+    flex-grow: 1;
+    margin-bottom: 15px;
+}
+
+.quiz-info p {
+    color: #34495e;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quiz-info i {
+    color: #3498db;
+    width: 20px;
+}
+
+.quiz-actions {
+    margin-top: auto;
+    text-align: center;
+}
+
+.btn-join {
+    background: linear-gradient(145deg, #2ecc71, #27ae60);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+}
+
+.btn-join:hover {
+    background: linear-gradient(145deg, #27ae60, #219a52);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(46, 204, 113, 0.4);
+    color: white;
+}
+
+.btn-join:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .col-md-6 {
+        margin-bottom: 20px;
+    }
+}
+</style>
+{% endblock %} 

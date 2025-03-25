@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Xem bài kiểm tra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="quiz-header">
+        <h1>{{ quiz.title }}</h1>
+        <div class="quiz-info">
+            <p><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
+            <p><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+
+    <div class="questions-list">
+        {% for question in questions %}
+        <div class="question-card">
+            <h3>Câu hỏi {{ loop.index }}</h3>
+            <p class="question-text">{{ question.question_text }}</p>
+            
+            {% if question.question_type == 'multiple_choice' %}
+                <div class="options">
+                    {% for answer in question.answers %}
+                    <div class="option">
+                        {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
+                        <span class="option-letter">{{ option_letter }}.</span>
+                        <span class="answer-text">{{ answer.answer_text }}</span>
+                        {% if answer.answer_text == question.correct_answer %}
+                            <span class="correct-answer-badge">Đáp án đúng</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="fill-in-blank">
+                    <p><strong>Đáp án:</strong> {{ question.correct_answer }}</p>
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Chỉnh sửa</a>
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">Quay lại</a>
+    </div>
+</div>
+
+<style>
+.quiz-header {
+    background: linear-gradient(135deg, #a1b8ec 0%, #ae22e6 100%);
+    color: white;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quiz-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.quiz-info {
+    display: flexbox;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.question-card {
+    background: rgb(212, 209, 219);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.question-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.question-card h3 {
+    color: #000000;
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid #4b6cb7;
+    padding-bottom: 8px;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s;
+}
+
+.option:hover {
+    background: #edf2ff;
+    border-color: #4b6cb7;
+}
+
+.option-letter {
+    font-weight: 600;
+    color: #4b6cb7;
+    min-width: 25px;
+}
+
+.correct-answer-badge {
+    background: linear-gradient(135deg, #00b09b 0%, #0c9e61 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0,150,0,0.2);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 10px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(75,108,183,0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(75,108,183,0.4);
+}
+
+.btn-secondary {
+    background: white;
+    color: #4b6cb7;
+    border: 2px solid #4b6cb7;
+}
+
+.btn-secondary:hover {
+    background: #4b6cb7;
+    color: white;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .quiz-header {
+        padding: 20px;
+    }
+    
+    .quiz-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %} 
