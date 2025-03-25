@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}Chi Tiết Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="quiz-detail-page">
+        <div class="page-header">
+            <h1 class="quiz-title">{{ quiz.title }}</h1>
+            
+            <div class="action-bar">
+                <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay Lại
+                </a>
+                <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i> Chỉnh Sửa
+                </a>
+                <a href="{{ url_for('delete_quiz', quiz_id=quiz.id) }}" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa bài kiểm tra này?');">
+                    <i class="fas fa-trash"></i> Xóa
+                </a>
+            </div>
+        </div>
+        
+        <div class="quiz-info-card">
+            <div class="card-header">
+                <h2>Thông tin bài kiểm tra</h2>
+            </div>
+            
+            <div class="quiz-metadata">
+                <div class="info-row">
+                    <div class="info-item">
+                        <div class="info-icon"><i class="far fa-calendar-alt"></i></div>
+                        <div class="info-content">
+                            <span class="info-label">Thời gian bắt đầu</span>
+                            <span class="info-value">{{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon"><i class="far fa-calendar-check"></i></div>
+                        <div class="info-content">
+                            <span class="info-label">Thời gian kết thúc</span>
+                            <span class="info-value">{{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-row">
+                    <div class="info-item">
+                        <div class="info-icon"><i class="far fa-clock"></i></div>
+                        <div class="info-content">
+                            <span class="info-label">Thời gian làm bài</span>
+                            <span class="info-value">{{ quiz.duration }} phút</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-icon"><i class="fas fa-list-ol"></i></div>
+                        <div class="info-content">
+                            <span class="info-label">Số câu hỏi</span>
+                            <span class="info-value">{{ questions|length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="questions-section">
+            <h2 class="section-title">Danh sách câu hỏi</h2>
+            
+            <div class="questions-list">
+                {% for question in questions %}
+                <div class="question-card">
+                    <div class="question-header">
+                        <div class="question-number">Câu {{ loop.index }}</div>
+                        <div class="question-type-badge {% if question.question_type == 'multiple_choice' %}multiple-choice{% else %}essay{% endif %}">
+                            {% if question.question_type == 'multiple_choice' %}
+                                <i class="fas fa-list-ul"></i> Trắc nghiệm
+                            {% else %}
+                                <i class="fas fa-paragraph"></i> Tự luận
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="question-content">
+                        <p class="question-text">{{ question.question_text }}</p>
+                        
+                        {% if question.question_type == 'multiple_choice' %}
+                        <div class="options-list">
+                            {% for answer in question.answers %}
+                            <div class="option-item {% if answer.answer_text == question.correct_answer %}correct-option{% endif %}">
+                                <div class="option-marker">{{ loop.index }}</div>
+                                <div class="option-text">{{ answer.answer_text }}</div>
+                                {% if answer.answer_text == question.correct_answer %}
+                                <div class="correct-badge"><i class="fas fa-check"></i> Đáp án đúng</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="essay-answer">
+                            <div class="answer-label">Đáp án đúng:</div>
+                            <div class="answer-content">{{ question.correct_answer }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .quiz-detail-page {
+        padding: 20px 0;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 15px;
+    }
+    
+    .quiz-title {
+        margin: 0;
+        color: #333;
+        font-size: 28px;
+    }
+    
+    .action-bar {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .quiz-info-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background-color: #4a6fdc;
+        color: white;
+        padding: 15px 20px;
+    }
+    
+    .card-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+    
+    .quiz-metadata {
+        padding: 20px;
+    }
+    
+    .info-row {
+        display: flex;
+        margin-bottom: 20px;
+    }
+    
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-item {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background-color: #f5f7ff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #4a6fdc;
+        font-size: 18px;
+        margin-right: 15px;
+    }
+    
+    .info-content {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 4px;
+    }
+    
+    .info-value {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .section-title {
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #333;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+    }
+    
+    .questions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .question-card {
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .question-number {
+        font-weight: bold;
+        color: #333;
+        font-size: 16px;
+    }
+    
+    .question-type-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .question-type-badge.multiple-choice {
+        background-color: #e7f7ee;
+        color: #28a745;
+    }
+    
+    .question-type-badge.essay {
+        background-color: #e7f1ff;
+        color: #007bff;
+    }
+    
+    .question-content {
+        padding: 20px;
+    }
+    
+    .question-text {
+        font-size: 16px;
+        margin-bottom: 20px;
+        color: #333;
+    }
+    
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .option-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 10px 15px;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        position: relative;
+    }
+    
+    .option-item.correct-option {
+        background-color: #e7f7ee;
+        border-color: #28a745;
+    }
+    
+    .option-marker {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+    
+    .correct-option .option-marker {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .option-text {
+        flex: 1;
+    }
+    
+    .correct-badge {
+        padding: 2px 8px;
+        background-color: #28a745;
+        color: white;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-left: 10px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .essay-answer {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .answer-label {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #333;
+    }
+    
+    .answer-content {
+        color: #28a745;
+        font-weight: 500;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .action-bar {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            gap: 15px;
+        }
+    }
+</style>
+{% endblock %} 

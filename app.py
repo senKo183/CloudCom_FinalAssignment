@@ -184,16 +184,20 @@ def create_quiz():
                 for j in range(4):
                     option = request.form.getlist(f'option{j+1}[]')[i]
                     answer = Answer(
-                        question_id=question.id,  # Now question.id exists
+                        question_id=question.id,
                         answer_text=option
                     )
                     db.session.add(answer)
+            
+            elif question_types[i] == 'fill_in_blank':
+                # Câu hỏi điền vào chỗ trống chỉ cần lưu đáp án đúng
+                pass
         
         db.session.commit()
         flash('Tạo bài kiểm tra thành công!')
         return redirect(url_for('teacher_dashboard'))
     
-    return render_template('create_quiz.html')
+    return render_template('create_quiz_new.html')
 
 @app.route('/teacher/manage-quizzes')
 def manage_quizzes():
@@ -216,11 +220,125 @@ def history():
     
     return render_template('history.html', quizzes=quizzes)
 
+@app.route('/view-quiz/<int:quiz_id>')
+def view_quiz(quiz_id):
+    if 'user_id' not in session or session['role'] != 'teacher':
+        flash('Bạn không có quyền truy cập trang này!')
+        return redirect(url_for('home'))
+    
+    # Lấy thông tin bài kiểm tra
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Kiểm tra xem người dùng có phải là chủ sở hữu của bài kiểm tra không
+    if quiz.teacher_id != session['user_id']:
+        flash('Bạn không có quyền xem bài kiểm tra này!')
+        return redirect(url_for('manage_quizzes'))
+    
+    # Lấy danh sách câu hỏi của bài kiểm tra
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    return render_template('view_quiz.html', quiz=quiz, questions=questions)
+
+@app.route('/edit-quiz/<int:quiz_id>', methods=['GET', 'POST'])
+def edit_quiz(quiz_id):
+    if 'user_id' not in session or session['role'] != 'teacher':
+        flash('Bạn không có quyền truy cập trang này!')
+        return redirect(url_for('home'))
+    
+    # Lấy thông tin bài kiểm tra
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Kiểm tra xem người dùng có phải là chủ sở hữu của bài kiểm tra không
+    if quiz.teacher_id != session['user_id']:
+        flash('Bạn không có quyền chỉnh sửa bài kiểm tra này!')
+        return redirect(url_for('manage_quizzes'))
+    
+    # Lấy danh sách câu hỏi của bài kiểm tra
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    if request.method == 'POST':
+        # Cập nhật thông tin cơ bản của bài kiểm tra
+        quiz.title = request.form.get('title')
+        quiz.start_time = datetime.fromisoformat(request.form.get('start_time').replace('Z', '+00:00'))
+        quiz.end_time = datetime.fromisoformat(request.form.get('end_time').replace('Z', '+00:00'))
+        quiz.duration = int(request.form.get('duration'))
+        
+        # Xử lý cập nhật câu hỏi
+        # 1. Xóa các câu hỏi hiện tại
+        for question in questions:
+            # Xóa các câu trả lời của câu hỏi
+            Answer.query.filter_by(question_id=question.id).delete()
+            
+        # Xóa tất cả câu hỏi
+        Question.query.filter_by(quiz_id=quiz_id).delete()
+        
+        # 2. Thêm câu hỏi mới
+        questions = request.form.getlist('questions[]')
+        question_types = request.form.getlist('question_types[]')
+        correct_answers = request.form.getlist('correct_answers[]')
+        
+        for i in range(len(questions)):
+            question = Question(
+                quiz_id=quiz.id,
+                question_text=questions[i],
+                question_type=question_types[i],
+                correct_answer=correct_answers[i]
+            )
+            db.session.add(question)
+            db.session.commit()  # Commit question to get its ID
+            
+            # Nếu là câu hỏi trắc nghiệm, thêm các lựa chọn
+            if question_types[i] == 'multiple_choice':
+                for j in range(4):
+                    option = request.form.getlist(f'option{j+1}[]')[i]
+                    answer = Answer(
+                        question_id=question.id,
+                        answer_text=option
+                    )
+                    db.session.add(answer)
+        
+        db.session.commit()
+        flash('Cập nhật bài kiểm tra thành công!')
+        return redirect(url_for('manage_quizzes'))
+    
+    return render_template('edit_quiz.html', quiz=quiz, questions=questions)
+
+@app.route('/delete-quiz/<int:quiz_id>')
+def delete_quiz(quiz_id):
+    if 'user_id' not in session or session['role'] != 'teacher':
+        flash('Bạn không có quyền truy cập trang này!')
+        return redirect(url_for('home'))
+    
+    # Lấy thông tin bài kiểm tra
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Kiểm tra xem người dùng có phải là chủ sở hữu của bài kiểm tra không
+    if quiz.teacher_id != session['user_id']:
+        flash('Bạn không có quyền xóa bài kiểm tra này!')
+        return redirect(url_for('manage_quizzes'))
+    
+    # Lấy danh sách câu hỏi của bài kiểm tra
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    
+    # Xóa các câu trả lời và câu hỏi
+    for question in questions:
+        Answer.query.filter_by(question_id=question.id).delete()
+    
+    Question.query.filter_by(quiz_id=quiz_id).delete()
+    
+    # Xóa bài kiểm tra
+    db.session.delete(quiz)
+    db.session.commit()
+    
+    flash('Xóa bài kiểm tra thành công!')
+    return redirect(url_for('manage_quizzes'))
+
 def main():
     with app.app_context():
         # Chỉ tạo bảng nếu chưa tồn tại
         db.create_all()
     app.run(debug=True)
+
 
 if __name__ == "__main__":
     main() 

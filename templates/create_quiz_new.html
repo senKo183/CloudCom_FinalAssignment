@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Tạo Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<div class="create-quiz-container">
+    <h1>Tạo Bài Kiểm Tra Mới</h1>
+    
+    <form method="POST" class="quiz-form">
+        <div class="form-group">
+            <label for="title">Tiêu đề bài kiểm tra:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+
+        <div class="form-group">
+            <label for="start_time">Thời gian bắt đầu:</label>
+            <input type="datetime-local" id="start_time" name="start_time" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_time">Thời gian kết thúc:</label>
+            <input type="datetime-local" id="end_time" name="end_time" required>
+        </div>
+
+        <div class="form-group">
+            <label for="duration">Thời gian làm bài (phút):</label>
+            <input type="number" id="duration" name="duration" min="1" required>
+        </div>
+
+        <div id="questions-container">
+            <h2>Câu hỏi</h2>
+            <div class="question-item">
+                <div class="form-group">
+                    <label>Câu hỏi 1:</label>
+                    <textarea name="questions[]" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Loại câu hỏi:</label>
+                    <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
+                        <option value="multiple_choice">Trắc nghiệm</option>
+                        <option value="fill_in_blank">Điền đáp án</option>
+                    </select>
+                </div>
+
+                <div class="multiple-choice-options">
+                    <div class="form-group">
+                        <label>Các lựa chọn:</label>
+                        <input type="text" name="option1[]" placeholder="Lựa chọn A" required>
+                        <input type="text" name="option2[]" placeholder="Lựa chọn B" required>
+                        <input type="text" name="option3[]" placeholder="Lựa chọn C" required>
+                        <input type="text" name="option4[]" placeholder="Lựa chọn D" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Đáp án đúng:</label>
+                    <input type="text" name="correct_answers[]" required>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-secondary" onclick="addQuestion()">Thêm câu hỏi</button>
+        <button type="submit" class="btn btn-primary">Tạo bài kiểm tra</button>
+    </form>
+</div>
+
+<script>
+function toggleAnswerType(select) {
+    const questionItem = select.closest('.question-item');
+    const multipleChoiceOptions = questionItem.querySelector('.multiple-choice-options');
+    const optionInputs = multipleChoiceOptions.querySelectorAll('input');
+    
+    if (select.value === 'multiple_choice') {
+        multipleChoiceOptions.style.display = 'block';
+        optionInputs.forEach(input => input.required = true);
+    } else {
+        multipleChoiceOptions.style.display = 'none';
+        optionInputs.forEach(input => input.required = false);
+    }
+}
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const questionCount = container.getElementsByClassName('question-item').length + 1;
+    
+    const newQuestion = document.createElement('div');
+    newQuestion.className = 'question-item';
+    newQuestion.innerHTML = `
+        <hr>
+        <div class="form-group">
+            <label>Câu hỏi ${questionCount}:</label>
+            <textarea name="questions[]" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Loại câu hỏi:</label>
+            <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
+                <option value="multiple_choice">Trắc nghiệm</option>
+                <option value="fill_in_blank">Điền vào chỗ trống</option>
+            </select>
+        </div>
+
+        <div class="multiple-choice-options">
+            <div class="form-group">
+                <label>Các lựa chọn:</label>
+                <input type="text" name="option1[]" placeholder="Lựa chọn A" required>
+                <input type="text" name="option2[]" placeholder="Lựa chọn B" required>
+                <input type="text" name="option3[]" placeholder="Lựa chọn C" required>
+                <input type="text" name="option4[]" placeholder="Lựa chọn D" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Đáp án đúng:</label>
+            <input type="text" name="correct_answers[]" required>
+        </div>
+    `;
+    
+    container.appendChild(newQuestion);
+}
+</script>
+{% endblock %} 
