@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh Sửa Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Chỉnh Sửa Bài Kiểm Tra</h1>
+    
+    <div class="action-bar">
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+    
+    <form method="POST" id="editQuizForm">
+        <div class="form-group">
+            <label for="title">Tiêu đề bài kiểm tra:</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ quiz.title }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="start_time">Thời gian bắt đầu:</label>
+            <input type="datetime-local" class="form-control" id="start_time" name="start_time" value="{{ quiz.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="end_time">Thời gian kết thúc:</label>
+            <input type="datetime-local" class="form-control" id="end_time" name="end_time" value="{{ quiz.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="duration">Thời gian làm bài (phút):</label>
+            <input type="number" class="form-control" id="duration" name="duration" value="{{ quiz.duration }}" required>
+        </div>
+        
+        <h3>Danh sách câu hỏi</h3>
+        <div id="questions-container">
+            {% for question in questions %}
+            <div class="question-card" id="question-{{ loop.index }}">
+                <div class="question-header">
+                    <h4>Câu hỏi {{ loop.index }}</h4>
+                    <button type="button" class="btn btn-danger btn-sm remove-question" onclick="removeQuestion({{ loop.index }})">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question-text-{{ loop.index }}">Nội dung câu hỏi:</label>
+                    <textarea class="form-control" id="question-text-{{ loop.index }}" name="questions[]" required>{{ question.question_text }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question-type-{{ loop.index }}">Loại câu hỏi:</label>
+                    <select class="form-control" id="question-type-{{ loop.index }}" name="question_types[]" onchange="toggleQuestionType({{ loop.index }})" required>
+                        <option value="multiple_choice" {% if question.question_type == 'multiple_choice' %}selected{% endif %}>Trắc nghiệm</option>
+                        <option value="essay" {% if question.question_type == 'essay' %}selected{% endif %}>Tự luận</option>
+                    </select>
+                </div>
+                
+                <div class="options-container" id="options-container-{{ loop.index }}" {% if question.question_type != 'multiple_choice' %}style="display: none;"{% endif %}>
+                    {% set outer_loop = loop %}
+                    {% for answer in question.answers %}
+                    <div class="form-group">
+                        <label for="option{{ loop.index }}-{{ outer_loop.index }}">Lựa chọn {{ loop.index }}:</label>
+                        <input type="text" class="form-control" id="option{{ loop.index }}-{{ outer_loop.index }}" name="option{{ loop.index }}[]" value="{{ answer.answer_text }}" required>
+                    </div>
+                    {% endfor %}
+                    
+                    {# Thêm các lựa chọn còn thiếu nếu có ít hơn 4 lựa chọn #}
+                    {% for i in range(question.answers|length + 1, 5) %}
+                    <div class="form-group">
+                        <label for="option{{ i }}-{{ outer_loop.index }}">Lựa chọn {{ i }}:</label>
+                        <input type="text" class="form-control" id="option{{ i }}-{{ outer_loop.index }}" name="option{{ i }}[]" value="" required>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="correct-answer-{{ loop.index }}">Đáp án đúng:</label>
+                    <input type="text" class="form-control" id="correct-answer-{{ loop.index }}" name="correct_answers[]" value="{{ question.correct_answer }}" required>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <button type="button" class="btn btn-success" id="add-question">
+            <i class="fas fa-plus"></i> Thêm câu hỏi
+        </button>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">Hủy</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    .question-card {
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .form-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .action-bar {
+        margin-bottom: 20px;
+    }
+</style>
+
+<script>
+    let questionCount = {{ questions|length }};
+    
+    function addQuestion() {
+        questionCount++;
+        const questionHTML = `
+            <div class="question-card" id="question-${questionCount}">
+                <div class="question-header">
+                    <h4>Câu hỏi ${questionCount}</h4>
+                    <button type="button" class="btn btn-danger btn-sm remove-question" onclick="removeQuestion(${questionCount})">
+                        <i class="fas fa-trash"></i> Xóa
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question-text-${questionCount}">Nội dung câu hỏi:</label>
+                    <textarea class="form-control" id="question-text-${questionCount}" name="questions[]" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question-type-${questionCount}">Loại câu hỏi:</label>
+                    <select class="form-control" id="question-type-${questionCount}" name="question_types[]" onchange="toggleQuestionType(${questionCount})" required>
+                        <option value="multiple_choice">Trắc nghiệm</option>
+                        <option value="essay">Tự luận</option>
+                    </select>
+                </div>
+                
+                <div class="options-container" id="options-container-${questionCount}">
+                    <div class="form-group">
+                        <label for="option1-${questionCount}">Lựa chọn 1:</label>
+                        <input type="text" class="form-control" id="option1-${questionCount}" name="option1[]" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="option2-${questionCount}">Lựa chọn 2:</label>
+                        <input type="text" class="form-control" id="option2-${questionCount}" name="option2[]" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="option3-${questionCount}">Lựa chọn 3:</label>
+                        <input type="text" class="form-control" id="option3-${questionCount}" name="option3[]" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="option4-${questionCount}">Lựa chọn 4:</label>
+                        <input type="text" class="form-control" id="option4-${questionCount}" name="option4[]" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="correct-answer-${questionCount}">Đáp án đúng:</label>
+                    <input type="text" class="form-control" id="correct-answer-${questionCount}" name="correct_answers[]" required>
+                </div>
+            </div>
+        `;
+        document.getElementById('questions-container').insertAdjacentHTML('beforeend', questionHTML);
+    }
+    
+    function removeQuestion(index) {
+        const questionElement = document.getElementById(`question-${index}`);
+        if (questionElement) {
+            questionElement.remove();
+        }
+    }
+    
+    function toggleQuestionType(index) {
+        const questionType = document.getElementById(`question-type-${index}`).value;
+        const optionsContainer = document.getElementById(`options-container-${index}`);
+        
+        if (questionType === 'multiple_choice') {
+            optionsContainer.style.display = 'block';
+        } else {
+            optionsContainer.style.display = 'none';
+        }
+    }
+    
+    document.getElementById('add-question').addEventListener('click', addQuestion);
+</script>
+{% endblock %} 
