@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Kết quả bài kiểm tra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="quiz-header">
+        <h1>Kết quả bài kiểm tra: {{ quiz.title }}</h1>
+        <div class="quiz-info">
+            <p><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
+        </div>
+    </div>
+
+    <div class="results-summary">
+        <div class="summary-card">
+            <h3>Tổng số học sinh đã làm bài</h3>
+            <p class="summary-number">{{ results|length }}</p>
+        </div>
+        <div class="summary-card">
+            <h3>Điểm trung bình</h3>
+            <p class="summary-number">
+                {% if results %}
+                    {{ "%.2f"|format(results|map(attribute='score')|sum / results|length) }}/10
+                {% else %}
+                    0/10
+                {% endif %}
+            </p>
+        </div>
+        <div class="summary-card">
+            <h3>Điểm cao nhất</h3>
+            <p class="summary-number">
+                {% if results %}
+                    {{ "%.2f"|format(results|map(attribute='score')|max) }}/10
+                {% else %}
+                    0/10
+                {% endif %}
+            </p>
+        </div>
+        <div class="summary-card">
+            <h3>Điểm thấp nhất</h3>
+            <p class="summary-number">
+                {% if results %}
+                    {{ "%.2f"|format(results|map(attribute='score')|min) }}/10
+                {% else %}
+                    0/10
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <div class="results-table">
+        <h2>Danh sách kết quả</h2>
+        {% if results %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên học sinh</th>
+                            <th>Email</th>
+                            <th>Điểm số</th>
+                            <th>Thời gian nộp bài</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ result.student.username }}</td>
+                            <td>{{ result.student.email }}</td>
+                            <td class="score-cell">{{ "%.2f"|format(result.score) }}/10</td>
+                            <td>{{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="no-results">Chưa có học sinh nào làm bài kiểm tra.</p>
+        {% endif %}
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+<style>
+.quiz-header {
+    background-color: #343a40;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.quiz-header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.quiz-info {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.results-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.summary-card h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
+}
+
+.summary-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+    margin: 10px 0 0;
+}
+
+.results-table {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.results-table h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.score-cell {
+    font-weight: bold;
+    color: #28a745;
+}
+
+.no-results {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.action-buttons {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+@media (max-width: 768px) {
+    .results-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-responsive {
+        margin: 0 -20px;
+    }
+}
+</style>
+{% endblock %} 

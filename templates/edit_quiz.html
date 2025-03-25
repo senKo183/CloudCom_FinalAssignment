@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh Sửa Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Chỉnh Sửa Bài Kiểm Tra</h1>
+    
+    <div class="action-bar">
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay Lại
+        </a>
+    </div>
+    
+    <form method="POST" class="quiz-form">
+        <div class="form-group">
+            <label for="title">Tiêu đề bài kiểm tra:</label>
+            <input type="text" id="title" name="title" value="{{ quiz.title }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="start_time">Thời gian bắt đầu:</label>
+            <input type="datetime-local" id="start_time" name="start_time" 
+                   value="{{ quiz.start_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="end_time">Thời gian kết thúc:</label>
+            <input type="datetime-local" id="end_time" name="end_time" 
+                   value="{{ quiz.end_time.strftime('%Y-%m-%dT%H:%M') }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="duration">Thời gian làm bài (phút):</label>
+            <input type="number" id="duration" name="duration" min="1" 
+                   value="{{ quiz.duration }}" required>
+        </div>
+
+        <div id="questions-container">
+            <h2>Danh sách câu hỏi</h2>
+            {% for question in quiz.questions %}
+            <div class="question-item">
+                <hr>
+                <div class="form-group">
+                    <label>Câu hỏi {{ loop.index }}:</label>
+                    <textarea name="questions[]" required>{{ question.question_text }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Loại câu hỏi:</label>
+                    <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
+                        <option value="multiple_choice" {% if question.question_type == 'multiple_choice' %}selected{% endif %}>
+                            Trắc nghiệm
+                        </option>
+                        <option value="fill_in_blank" {% if question.question_type == 'fill_in_blank' %}selected{% endif %}>
+                            Điền vào chỗ trống
+                        </option>
+                    </select>
+                </div>
+
+                <div class="multiple-choice-options" {% if question.question_type != 'multiple_choice' %}style="display: none;"{% endif %}>
+                    <div class="form-group">
+                        <label>Các lựa chọn:</label>
+                        {% for answer in question.answers %}
+                            <input type="text" name="option{{ loop.index }}[]" 
+                                   placeholder="Lựa chọn {{ loop.index }}" 
+                                   value="{{ answer.answer_text }}"
+                                   {% if question.question_type == 'multiple_choice' %}required{% endif %}>
+                        {% endfor %}
+                        {# Thêm các input trống nếu chưa đủ 4 lựa chọn #}
+                        {% for _ in range(4 - question.answers|length) %}
+                            <input type="text" name="option{{ question.answers|length + loop.index }}[]" 
+                                   placeholder="Lựa chọn {{ question.answers|length + loop.index }}"
+                                   {% if question.question_type == 'multiple_choice' %}required{% endif %}>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Đáp án đúng:</label>
+                    <input type="text" name="correct_answers[]" value="{{ question.correct_answer }}" required>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="button" class="btn btn-secondary" onclick="addQuestion()">Thêm câu hỏi</button>
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-danger">Hủy</a>
+    </form>
+</div>
+
+<style>
+    .question-card {
+        background-color: #f9f9f9;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .form-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .action-bar {
+        margin-bottom: 20px;
+    }
+</style>
+
+<script>
+function toggleAnswerType(select) {
+    const questionItem = select.closest('.question-item');
+    const multipleChoiceOptions = questionItem.querySelector('.multiple-choice-options');
+    const optionInputs = multipleChoiceOptions.querySelectorAll('input');
+    
+    if (select.value === 'multiple_choice') {
+        multipleChoiceOptions.style.display = 'block';
+        optionInputs.forEach(input => input.required = true);
+    } else {
+        multipleChoiceOptions.style.display = 'none';
+        optionInputs.forEach(input => {
+            input.required = false;
+            input.value = ''; // Xóa giá trị khi chuyển sang điền vào chỗ trống
+        });
+    }
+}
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const questionCount = container.getElementsByClassName('question-item').length + 1;
+    
+    const newQuestion = document.createElement('div');
+    newQuestion.className = 'question-item';
+    newQuestion.innerHTML = `
+        <hr>
+        <div class="form-group">
+            <label>Câu hỏi ${questionCount}:</label>
+            <textarea name="questions[]" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Loại câu hỏi:</label>
+            <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
+                <option value="multiple_choice">Trắc nghiệm</option>
+                <option value="fill_in_blank">Điền vào chỗ trống</option>
+            </select>
+        </div>
+
+        <div class="multiple-choice-options">
+            <div class="form-group">
+                <label>Các lựa chọn:</label>
+                <input type="text" name="option1[]" placeholder="Lựa chọn A" required>
+                <input type="text" name="option2[]" placeholder="Lựa chọn B" required>
+                <input type="text" name="option3[]" placeholder="Lựa chọn C" required>
+                <input type="text" name="option4[]" placeholder="Lựa chọn D" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Đáp án đúng:</label>
+            <input type="text" name="correct_answers[]" required>
+        </div>
+    `;
+    
+    container.appendChild(newQuestion);
+}
+</script>
+{% endblock %} 
