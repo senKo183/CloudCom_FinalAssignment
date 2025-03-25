@@ -7,7 +7,7 @@
 
 
 * {
-    margin: 0;
+    margin:  0;
     padding: 0;
     box-sizing: border-box;
 }
@@ -264,38 +264,79 @@ body {
 }
 
 .quiz-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-    gap: 15px;
-    margin-top: 1.5rem;
+    display: flex; 
+    gap: 15px; 
+    margin-top: 1.5rem; 
+    overflow-x: auto; 
+    white-space: nowrap;
+}
+.quiz-item {
+    flex: 0 0 auto; 
+    min-width: 500px; 
 }
 .quiz-card {
-    display: flexbox;
+    display: block;
     background: #ffffff;
     padding: 1.5rem;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    max-width: 1000px;
+    max-width: 100%;
     margin: 20px auto;
-    width: 95%;
+    width: auto;
+    box-sizing: border-box; /* Đảm bảo padding không làm thay đổi kích thước */
+    height: auto; /* Tự động điều chỉnh chiều cao */
 }
 
+.quiz-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Hiệu ứng hover */
+    transform: translateY(-5px);
+}
 
 .quiz-card h3 {
     font-family: 'Times New Roman', Times, serif;
-    background: #2f0b74;
+    background: #7754b9;
     color: #ffffff;
     border-radius: 10px;
     padding: 15px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    display: flex;
-    flex-direction: column;
+    margin: 0; /* Xóa margin mặc định */
+    font-size: 1.5rem; /* Điều chỉnh kích thước font cho tiêu đề */
+    text-overflow: ellipsis;  /* Hiển thị "..." khi văn bản bị tràn */
+    overflow: hidden;         /* Ẩn phần văn bản bị tràn */
+    white-space: nowrap;      /* Ngăn văn bản xuống dòng */
+    word-wrap: break-word;    /* Chia từ nếu quá dài */
 }
+
+.quiz-card .quiz-info {
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.quiz-card .quiz-info-text {
+    font-size: 1rem;
+    color: #333;
+}
+
+.quiz-card .quiz-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+}
+
 
 .quiz-actions {
     display: flex;
     gap: 1rem;
     margin-top: 1rem;
+}
+.quiz-actions .btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+.quiz-info-text {
+    font-size: 0.875rem;
+    margin: 5px 0;
+    word-wrap: break-word; /* Đảm bảo nội dung dài không bị tràn ra ngoài */
 }
 
 .btn-small {
@@ -602,3 +643,12 @@ p a:hover {
 }
 
 
+.alert {
+    background-color: #b5e0c5;
+    color: #000;
+    position: relative;
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+}
