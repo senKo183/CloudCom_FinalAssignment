@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa thông tin{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <div class="edit-header">
+        <h1>Chỉnh sửa thông tin cá nhân</h1>
+        <a href="{{ url_for('profile') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+
+    <div class="edit-form-card">
+        <form action="{{ url_for('edit_profile') }}" method="POST" class="edit-form">
+            <div class="form-group">
+                <label for="username">Tên đăng nhập</label>
+                <input type="text" id="username" value="{{ user.username }}" disabled>
+                <small>Tên đăng nhập không thể thay đổi</small>
+            </div>
+
+            <div class="form-group">
+                <label for="full_name">Họ và tên</label>
+                <input type="text" id="full_name" name="full_name" value="{{ profile.full_name or '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" value="{{ user.email }}" disabled>
+                <small>Email không thể thay đổi</small>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Số điện thoại</label>
+                <input type="tel" id="phone" name="phone" value="{{ profile.phone or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Địa chỉ</label>
+                <input type="text" id="address" name="address" value="{{ profile.address or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="bio">Giới thiệu</label>
+                <textarea id="bio" name="bio" rows="4">{{ profile.bio or '' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="save-btn">
+                    <i class="fas fa-save"></i> Lưu thay đổi
+                </button>
+                <a href="{{ url_for('profile') }}" class="cancel-btn">
+                    <i class="fas fa-times"></i> Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.edit-profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.edit-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #2d3748;
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #edf2f7;
+    color: #4a5568;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #e2e8f0;
+    color: #2d3748;
+}
+
+.edit-form-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4a5568;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:disabled {
+    background: #f7fafc;
+    cursor: not-allowed;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.save-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 25px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+    background: #5361bc;
+    transform: translateY(-2px);
+}
+
+.cancel-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 25px;
+    background: #edf2f7;
+    color: #4a5568;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background: #e2e8f0;
+    color: #2d3748;
+}
+
+@media (max-width: 768px) {
+    .edit-profile-container {
+        padding: 0 15px;
+    }
+
+    .edit-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .edit-form-card {
+        padding: 20px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .save-btn, .cancel-btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %} 
