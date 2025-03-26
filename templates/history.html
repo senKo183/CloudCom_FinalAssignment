@@ -3,257 +3,467 @@
 {% block title %}Lịch sử bài kiểm tra{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="dashboard-container">
     <div class="page-header">
-        <h1>Lịch sử bài kiểm tra</h1>
+        <div class="header-content">
+            <h1><i class="fas fa-history"></i> Lịch sử bài kiểm tra</h1>
+            <p class="header-subtitle">Xem lại các bài kiểm tra và kết quả</p>
+        </div>
     </div>
 
     {% if session.role == 'student' %}
         {% if results %}
-            <div class="row mb-5">
-                <div class="col-md-6">
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Tổng số bài đã làm</h3>
+                        <p>{{ results|length }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Điểm trung bình</h3>
+                        <p>{{ "%.2f"|format(results|map(attribute='score')|sum / results|length) }}/10</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Điểm cao nhất</h3>
+                        <p>{{ "%.2f"|format(results|map(attribute='score')|max) }}/10</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-charts">
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <h2><i class="fas fa-chart-line"></i> Tiến độ học tập</h2>
+                    </div>
                     <div class="chart-container">
                         <canvas id="scoreChart"></canvas>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <h2><i class="fas fa-chart-bar"></i> Phân phối điểm</h2>
+                    </div>
                     <div class="chart-container">
                         <canvas id="averageChart"></canvas>
                     </div>
                 </div>
             </div>
 
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Tên bài kiểm tra</th>
-                            <th>Điểm số</th>
-                            <th>Ngày nộp bài</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for result in results %}
-                        <tr>
-                            <td>{{ result.quiz.title }}</td>
-                            <td class="score-cell">{{ "%.2f"|format(result.score) }}/10</td>
-                            <td>{{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="results-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-list"></i> Chi tiết bài kiểm tra</h2>
+                </div>
+                <div class="table-container">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Tên bài kiểm tra</th>
+                                <th>Điểm số</th>
+                                <th>Ngày nộp bài</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr>
+                                <td>
+                                    <div class="quiz-title">
+                                        <i class="fas fa-file-alt"></i>
+                                        {{ result.quiz.title }}
+                                    </div>
+                                </td>
+                                <td class="score-cell">
+                                    <span class="score-badge {% if result.score >= 8 %}high{% elif result.score >= 5 %}medium{% else %}low{% endif %}">
+                                        {{ "%.2f"|format(result.score) }}/10
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="date-info">
+                                        <i class="far fa-clock"></i>
+                                        {{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         {% else %}
             <div class="empty-state">
-                <i class="fas fa-history fa-3x"></i>
-                <p>Bạn chưa tham gia bài kiểm tra nào.</p>
+                <div class="empty-icon">
+                    <i class="fas fa-book-reader fa-4x"></i>
+                </div>
+                <h2>Chưa có bài kiểm tra nào</h2>
+                <p>Bạn chưa tham gia bài kiểm tra nào. Hãy tham gia các bài kiểm tra để xem kết quả tại đây.</p>
             </div>
         {% endif %}
     {% else %}
         {% if quizzes %}
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Tên bài kiểm tra</th>
-                            <th>Thời gian bắt đầu</th>
-                            <th>Thời gian kết thúc</th>
-                            <th>Số học sinh đã nộp</th>
-                            <th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for quiz in quizzes %}
-                        <tr>
-                            <td>{{ quiz.title }}</td>
-                            <td>{{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>{{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td class="submissions-cell">{{ quiz.results|length }}</td>
-                            <td class="actions-cell">
-                                <a href="{{ url_for('view_quiz', quiz_id=quiz.id) }}" class="btn btn-info">
-                                    <i class="fas fa-eye"></i> Chi tiết
-                                </a>
-                                <a href="{{ url_for('quiz_students', quiz_id=quiz.id) }}" class="btn btn-primary">
-                                    <i class="fas fa-users"></i> Danh sách học sinh
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="teacher-dashboard">
+                <div class="section-header">
+                    <h2><i class="fas fa-chalkboard-teacher"></i> Quản lý bài kiểm tra</h2>
+                </div>
+                <div class="table-container">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Bài kiểm tra</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th>Số học sinh</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for quiz in quizzes %}
+                            <tr>
+                                <td>
+                                    <div class="quiz-title">
+                                        <i class="fas fa-file-alt"></i>
+                                        {{ quiz.title }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-info">
+                                        <div><i class="fas fa-play"></i> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</div>
+                                        <div><i class="fas fa-stop"></i> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% set now = datetime.now() %}
+                                    {% if now < quiz.start_time %}
+                                        <span class="status-badge upcoming">Sắp diễn ra</span>
+                                    {% elif now > quiz.end_time %}
+                                        <span class="status-badge completed">Đã kết thúc</span>
+                                    {% else %}
+                                        <span class="status-badge active">Đang diễn ra</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="student-count">
+                                        <i class="fas fa-users"></i>
+                                        <span>{{ quiz.results|length }}</span>
+                                    </div>
+                                </td>
+                                <td class="actions-cell">
+                                    <div class="action-buttons">
+                                        <a href="{{ url_for('view_quiz', quiz_id=quiz.id) }}" class="btn btn-view" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('quiz_students', quiz_id=quiz.id) }}" class="btn btn-students" title="Danh sách học sinh">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         {% else %}
             <div class="empty-state">
-                <i class="fas fa-clipboard-list fa-3x"></i>
-                <p>Bạn chưa tạo bài kiểm tra nào.</p>
+                <div class="empty-icon">
+                    <i class="fas fa-chalkboard fa-4x"></i>
+                </div>
+                <h2>Chưa có bài kiểm tra nào</h2>
+                <p>Bạn chưa tạo bài kiểm tra nào. Hãy tạo bài kiểm tra mới để bắt đầu.</p>
+                <a href="{{ url_for('create_quiz') }}" class="btn btn-create">
+                    <i class="fas fa-plus"></i> Tạo bài kiểm tra
+                </a>
             </div>
         {% endif %}
     {% endif %}
 </div>
 
 <style>
-.page-header {
-    background: linear-gradient(135deg, #4b6cb7 0%, #3a2d68 100%);
-    color: white;
-    padding: 30px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    text-align: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.page-header h1 {
+.page-header {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    border-radius: 15px;
+    padding: 40px;
+    margin-bottom: 30px;
+    text-align: center;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.header-content h1 {
+    color: white;
+    font-size: 2.5rem;
     margin: 0;
-    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.header-subtitle {
+    color: rgba(255,255,255,0.9);
+    margin: 10px 0 0;
+    font-size: 1.1rem;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-icon {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-icon i {
+    color: white;
+    font-size: 24px;
+}
+
+.stat-info h3 {
+    color: #4b5563;
+    margin: 0 0 5px;
+    font-size: 0.9rem;
+}
+
+.stat-info p {
+    color: #111827;
+    font-size: 1.5rem;
     font-weight: 600;
+    margin: 0;
+}
+
+.dashboard-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.chart-wrapper {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.chart-header {
+    margin-bottom: 20px;
+}
+
+.chart-header h2 {
+    color: #111827;
+    font-size: 1.2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .chart-container {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 30px;
     height: 300px;
-    transition: transform 0.2s;
 }
 
-.chart-container:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+.section-header {
+    margin-bottom: 20px;
 }
 
-.table-container {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
-}
-
-.table {
+.section-header h2 {
+    color: #111827;
+    font-size: 1.2rem;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-.table thead th {
-    background: #f8f9fa;
-    color: #495057;
-    font-weight: 600;
+.custom-table th {
+    background: #f3f4f6;
     padding: 15px;
-    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #4b5563;
+    text-align: left;
 }
 
-.table tbody tr {
-    transition: background-color 0.2s;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.table tbody td {
+.custom-table td {
     padding: 15px;
-    vertical-align: middle;
-    border-bottom: 1px solid #dee2e6;
+    border-top: 1px solid #e5e7eb;
 }
 
-.score-cell {
+.quiz-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #111827;
+    font-weight: 500;
+}
+
+.score-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
     font-weight: 600;
-    color: #28a745;
-    font-size: 16px;
+    font-size: 0.9rem;
 }
 
-.submissions-cell {
-    font-weight: 600;
-    color: #4b6cb7;
-    font-size: 16px;
+.score-badge.high {
+    background: #dcfce7;
+    color: #166534;
 }
 
-.actions-cell {
+.score-badge.medium {
+    background: #fef9c3;
+    color: #854d0e;
+}
+
+.score-badge.low {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.date-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-badge.upcoming {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-badge.completed {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.action-buttons {
     display: flex;
     gap: 10px;
 }
 
 .btn {
     padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 500;
+    border-radius: 8px;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.2s;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
-.btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #0c4750 100%);
+.btn-view {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.btn-students {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.btn-create {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
     color: white;
-    border: none;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #4b6cb7 0%, #d62edb 100%);
-    color: white;
-    border: none;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 12px 24px;
+    font-size: 1rem;
 }
 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
-.empty-state i {
-    color: #6c757d;
+.empty-icon {
+    color: #9ca3af;
     margin-bottom: 20px;
 }
 
+.empty-state h2 {
+    color: #111827;
+    margin: 0 0 10px;
+}
+
 .empty-state p {
-    color: #495057;
-    font-size: 18px;
-    margin: 0;
+    color: #6b7280;
+    margin: 0 0 20px;
 }
 
 @media (max-width: 768px) {
+    .dashboard-charts {
+        grid-template-columns: 1fr;
+    }
+
     .chart-container {
         height: 250px;
     }
-    
-    .actions-cell {
-        flex-direction: column;
-    }
-    
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .table thead {
-        display: none;
-    }
-    
-    .table tbody td {
-        font-size: 20px;
-        font-style: bold;
+
+    .custom-table {
         display: block;
-        text-align: right;
-        padding: 10px 15px;
-    }
-    
-    .table tbody td:before {
-        content: attr(data-label);
-        float: left;
-        font-weight: 600;
-        color: #495057;
+        overflow-x: auto;
     }
 }
 </style>
