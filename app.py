@@ -232,23 +232,12 @@ def history():
         flash('Vui lòng đăng nhập để xem lịch sử!')
         return redirect(url_for('login'))
     
-    # Lấy lịch sử làm bài của học sinh
     if session['role'] == 'student':
-        results = QuizResult.query\
-            .filter_by(student_id=session['user_id'])\
-            .order_by(QuizResult.submitted_at.desc())\
-            .all()
-        return render_template('history.html', results=results)
-    
-    # Lấy lịch sử bài kiểm tra của giáo viên
-    elif session['role'] == 'teacher':
-        quizzes = Quiz.query\
-            .filter_by(teacher_id=session['user_id'])\
-            .order_by(Quiz.start_time.desc())\
-            .all()
-        return render_template('history.html', quizzes=quizzes)
-    
-    return redirect(url_for('home'))
+        results = QuizResult.query.filter_by(student_id=session['user_id']).all()
+        return render_template('history.html', results=results, datetime=datetime)
+    else:
+        quizzes = Quiz.query.filter_by(teacher_id=session['user_id']).all()
+        return render_template('history.html', quizzes=quizzes, datetime=datetime)
 
 @app.route('/view-quiz/<int:quiz_id>')
 def view_quiz(quiz_id):
