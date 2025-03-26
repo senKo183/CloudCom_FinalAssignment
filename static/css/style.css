@@ -124,6 +124,7 @@ body {
 }
 
 .welcome-section h1 {
+    color: #520aa3;
     flex-grow: 1;  /* Nội dung chính sẽ chiếm không gian còn lại */
     padding: 20px;
     width: 100%;
