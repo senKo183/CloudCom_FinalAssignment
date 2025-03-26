@@ -1,0 +1,8 @@
+# Automatically created by mypy
+# Loại bỏ thư mục môi trường ảo Python
+venv/
+
+# Loại bỏ cache Python
+__pycache__/
+*.pyc
+*.pyo

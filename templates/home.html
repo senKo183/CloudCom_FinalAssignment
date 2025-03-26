@@ -6,19 +6,26 @@
 
 <div class="main-container">
     <div class="welcome-section">
-        <h1>Chào mừng đến với MathQuiz</h1>
+        <h1><i class="fas fa-graduation-cap"></i> Chào mừng bạn đến với MathQuiz</h1>
         {% if 'user_id' not in session %}
-            <p class="message-user">Vui lòng đăng nhập hoặc đăng ký để bắt đầu.</p>
+            <p class="message-user"><i class="fas fa-info-circle"></i> Vui lòng đăng nhập hoặc đăng ký để bắt đầu.</p>
             <div class="action-buttons">
-                <a href="{{ url_for('login') }}" class="btn">Đăng nhập</a>
-                <a href="{{ url_for('register') }}" class="btn">Đăng ký</a>
+                <a href="{{ url_for('login') }}" class="btn">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                </a>
+                <a href="{{ url_for('register') }}" class="btn">
+                    <i class="fas fa-user-plus"></i> Đăng ký
+                </a>
             </div>
         {% else %}
-            <p class="welcome-message">Xin chào, <b>{{ session['username'] }}</b>!</p>
+            <p class="welcome-message">
+                <i class="fas fa-user-circle"></i> Xin chào, <b>{{ session['username'] }}</b>!
+            </p>
             <div class="container mt-4"> 
                 <!-- Form tìm kiếm bài kiểm tra -->
                 <form action="{{ url_for('search_quiz') }}" method="GET" class="search-form">
                     <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
                         <input type="text" name="keyword" class="search-input" 
                                placeholder="Tìm kiếm bài kiểm tra..." required>
                         <button type="submit" class="search-btn">
@@ -29,10 +36,12 @@
 
                 <!-- Form nhập mã bài kiểm tra và nút tham gia -->
                 <form method="POST" class="quiz-join-form">
-                    <div class="input-container">
+                    <div class="input-container"> 
                         <input type="text" id="quiz_code" name="quiz_code" 
                                class="quiz-input" placeholder="Nhập mã tham gia" required>
-                        <button type="submit" class="quiz-btn">Tham gia</button>
+                        <button type="submit" class="quiz-btn">
+                            <i class="fas fa-door-open"></i> Tham gia
+                        </button>
                     </div>
                 </form>
             </div>
@@ -44,29 +53,38 @@
 </div>
 
 <style>
-.search-container {
+.search-container, .input-container {
+    position: relative;
     display: flex;
     gap: 12px;
     max-width: 500px;
     margin: 0 auto 20px;
-    position: relative;
     background: rgb(255, 255, 255);
     padding: 5px;
     border-radius: 25px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.search-input {
+.search-input, .quiz-input {
     flex: 1;
-    padding: 10px 15px;
-    border: 2px solid #eee;
+    padding: 10px 15px 10px 40px;
+    border: 2px solid #bbaeae;
     border-radius: 20px;
     font-size: 14px;
 }
 
-.search-btn {
+.search-icon, .input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 16px;
+}
+
+.search-btn, .quiz-btn {
     padding: 10px 20px;
-    background-color: #4b6ecc;
+    background-color: #757bd1;
     color: white;
     border: none;
     border-radius: 20px;
@@ -75,14 +93,135 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    transition: all 0.3s ease;
 }
 
-.search-btn:hover {
+.search-btn:hover, .quiz-btn:hover {
     background-color: #45a049;
+    transform: translateY(-2px);
 }
 
-.input-container {
-    margin-top: 20px;
+.welcome-section h1 {
+    color: #590e85;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    padding: 20px;
+    width: 100%;
+    font-size: 40px;
+    font-weight: 800;
+    box-sizing: border-box;
+}
+
+.welcome-section h1 i {
+    color: #4b6ecc;
+}
+
+.welcome-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.welcome-message i {
+    color: #4b6ecc;
+    font-size: 1.4rem;
+}
+
+.message-user {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+}
+
+.message-user i {
+    color: #4b6ecc;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.action-buttons .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 25px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    white-space: nowrap;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.action-buttons .btn:first-child {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+}
+
+.action-buttons .btn:first-child:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+    background: linear-gradient(135deg, #5a6fd6 0%, #6a4392 100%);
+}
+
+.action-buttons .btn:last-child {
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.action-buttons .btn:last-child:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+}
+
+.action-buttons .btn i {
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .welcome-section h1 {
+        font-size: 30px;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .action-buttons {
+        flex-direction: row;
+        gap: 10px;
+        padding: 0 10px;
+    }
+
+    .action-buttons .btn {
+        padding: 8px 20px;
+        min-width: auto;
+    }
+
+    .search-container, .input-container {
+        flex-direction: column;
+    }
+
+    .search-input, .quiz-input {
+        width: 100%;
+    }
 }
 </style>
 {% endblock %}
