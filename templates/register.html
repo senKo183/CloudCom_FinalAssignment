@@ -3,6 +3,14 @@
 {% block title %}Đăng ký{% endblock %}
 
 {% block content %}
+<!-- {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert alert-{{ messages[0][0] }}">
+            {{ messages[0][1] }}
+        </div>
+    {% endif %}
+{% endwith %} -->
+
 <div class="form-container">
     <h2>Đăng ký</h2>
     <form method="POST">
@@ -33,4 +41,25 @@
     </form>
     <p>Đã có tài khoản? <a href="{{ url_for('login') }}">Đăng nhập</a></p>
 </div>
+
+<style>
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.alert-error {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+</style>
 {% endblock %} 

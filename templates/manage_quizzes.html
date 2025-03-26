@@ -3,8 +3,237 @@
 {% block title %}Quản Lý Bài Kiểm Tra{% endblock %}
 
 {% block content %}
+<style>
+.container {
+    max-width: 1400px;
+    margin: 30px auto 2rem auto; /* Giảm margin-top xuống còn 30px */
+    padding: 2.5rem 3.5rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+    font-size: 2.4rem;
+    color: #2c3e50;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+h1 i {
+    color: #4CAF50;
+}
+
+.action-bar {
+    margin-bottom: 3rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.9rem 1.8rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-secondary {
+    background: #f8f9fa;
+    color: #f8f8f8;
+    border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background: #f1f3f5;
+}
+
+.quiz-list-manage {
+    display: flex;
+    flex-direction: column;
+    gap: 1.8rem;
+}
+
+.quiz-card {
+    padding: 3rem 3.5rem; /* Tăng padding */
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    margin-bottom: 2rem; /* Tăng margin bottom */
+}
+
+.quiz-card:hover {
+    background: #f1f3f5;
+    transform: translateY(-2px);
+}
+
+.quiz-info {
+    flex: 1;
+    margin-right: 4rem; /* Tăng khoảng cách với phần actions */
+}
+
+.quiz-info h3 {
+    font-size: 2rem; /* Tăng kích thước tiêu đề quiz */
+    color: #ffffff;
+    margin-bottom: 2.5rem;
+    font-weight: 600;
+}
+
+.quiz-info-text {
+    font-size: 1.4rem; /* Tăng kích thước text */
+    color: #4a5568;
+    margin: 1.5rem 0; /* Tăng margin */
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.quiz-info-text i {
+    color: #4CAF50;
+    width: 28px; /* Tăng kích thước icon */
+    font-size: 1.5rem; /* Tăng kích thước icon */
+}
+
+.quiz-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem; /* Tăng khoảng cách giữa các nút */
+    min-width: 220px; /* Tăng độ rộng tối thiểu */
+}
+
+.btn-small {
+    padding: 1.2rem 2rem; /* Tăng padding của nút */
+    font-size: 1.2rem; /* Tăng kích thước chữ */
+    width: 100%;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-info {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.btn-warning {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.btn-danger {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.btn-small:hover {
+    transform: translateX(5px);
+    filter: brightness(95%);
+}
+
+.no-quizzes {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.no-quizzes p {
+    font-size: 1.3rem;
+    color: #4a5568;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+    .quiz-card {
+        padding: 2.5rem 3rem;
+    }
+
+    .quiz-info h3 {
+        font-size: 1.8rem;
+    }
+
+    .quiz-info-text {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .container {
+        margin: 25px 1.5rem 1.5rem 1.5rem; /* Giảm margin trên thiết bị nhỏ hơn */
+    }
+
+    .quiz-card {
+        padding: 2rem 2.5rem;
+    }
+
+    .quiz-info h3 {
+        font-size: 1.6rem;
+    }
+
+    .quiz-info-text {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        margin: 20px 1rem 1rem 1rem; /* Giảm margin trên mobile */
+    }
+
+    .quiz-card {
+        padding: 2rem;
+    }
+
+    .quiz-info {
+        margin-right: 0;
+        margin-bottom: 2rem;
+    }
+
+    .quiz-info h3 {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .quiz-info-text {
+        font-size: 1.1rem;
+        margin: 1rem 0;
+    }
+
+    .quiz-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        min-width: 100%;
+    }
+
+    .btn-small {
+        flex: 1 1 calc(50% - 0.6rem);
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+    }
+}
+</style>
+
 <div class="container">
-    <h1>Quản Lý Bài Kiểm Tra</h1>
+    <h1><i class="fas fa-tasks"></i> Quản Lý Bài Kiểm Tra</h1>
     
     <div class="action-bar">
         <a href="{{ url_for('create_quiz') }}" class="btn btn-primary">
@@ -21,11 +250,22 @@
             <div class="quiz-card">
                 <div class="quiz-info">
                     <h3>{{ quiz.title }}</h3>
-                    <p class="quiz-info-text"><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p class="quiz-info-text"><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p class="quiz-info-text"><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
-                    {% set question_count = quiz.questions|length %}
-                    <p class="quiz-info-text"><strong>Số câu hỏi:</strong> {{ question_count }}</p>
+                    <p class="quiz-info-text">
+                        <i class="fas fa-clock"></i>
+                        <strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}
+                    </p>
+                    <p class="quiz-info-text">
+                        <i class="fas fa-hourglass-end"></i>
+                        <strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}
+                    </p>
+                    <p class="quiz-info-text">
+                        <i class="fas fa-stopwatch"></i>
+                        <strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút
+                    </p>
+                    <p class="quiz-info-text">
+                        <i class="fas fa-question-circle"></i>
+                        <strong>Số câu hỏi:</strong> {{ quiz.questions|length }}
+                    </p>
                 </div>
                 
                 <div class="quiz-actions">

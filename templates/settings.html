@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Cài đặt tài khoản{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h1>Cài đặt tài khoản</h1>
+
+    <div class="settings-card">
+        <h2>Đổi mật khẩu</h2>
+        <form action="{{ url_for('change_password') }}" method="POST" class="password-form">
+            <div class="form-group">
+                <label>Mật khẩu hiện tại</label>
+                <input type="password" name="current_password" required>
+            </div>
+            <div class="form-group">
+                <label>Mật khẩu mới</label>
+                <input type="password" name="new_password" required>
+            </div>
+            <div class="form-group">
+                <label>Xác nhận mật khẩu mới</label>
+                <input type="password" name="confirm_password" required>
+            </div>
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-key"></i> Đổi mật khẩu
+            </button>
+        </form>
+    </div>
+
+    <div class="settings-card">
+        <h2>Cài đặt thông báo</h2>
+        <div class="notification-settings">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <h3>Thông báo qua email</h3>
+                    <p>Nhận thông báo về bài kiểm tra mới qua email</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.settings-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-container h1 {
+    margin-bottom: 30px;
+    color: #2d3748;
+    font-size: 1.8rem;
+}
+
+.settings-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.settings-card h2 {
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+    color: #2d3748;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4a5568;
+    font-size: 0.9rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.submit-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: #5361bc;
+    transform: translateY(-2px);
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.setting-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+/* Switch toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #cbd5e0;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #667eea;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+@media (max-width: 768px) {
+    .settings-container {
+        padding: 0 15px;
+    }
+
+    .settings-card {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %} 

@@ -7,9 +7,9 @@
     <div class="quiz-header">
         <h1>{{ quiz.title }}</h1>
         <div class="quiz-info">
-            <p><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
-            <p><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-            <p><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p class="quiz-info-text"><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
+            <p class="quiz-info-text"><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p class="quiz-info-text"><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
         </div>
     </div>
 
@@ -48,46 +48,59 @@
 </div>
 
 <style>
+.container {
+    max-width: 100%;  /* Thay đổi thành full width */
+    margin-top: 40px;
+}
+
 .quiz-header {
-    background: linear-gradient(135deg, #a1b8ec 0%, #ae22e6 100%);
+    background: linear-gradient(120deg, #4e54c8, #8f94fb);
     color: white;
-    padding: 25px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 35px 50px;
+    margin-bottom: 35px;
+    box-shadow: 0 10px 30px rgba(78, 84, 200, 0.2);
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;  /* Bỏ border radius */
 }
 
 .quiz-header h1 {
     margin: 0;
-    font-size: 28px;
-    font-weight: 600;
-    margin-bottom: 15px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 25px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 .quiz-info {
-    display: flexbox;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
-    background: rgba(255,255,255,0.1);
-    padding: 15px;
-    border-radius: 8px;
+    
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    background: rgba(255, 247, 247, 0.12);
+    padding: 25px 35px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    max-width: 1300px;  /* Giới hạn độ rộng tối đa */
+    margin: 0 auto;  /* Căn giữa */
 }
 
 .questions-list {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
+    max-width: 1300px;  /* Giới hạn độ rộng tối đa */
+    margin: 0 auto;  /* Căn giữa */
+    padding: 0 20px;  /* Thêm padding hai bên */
 }
 
 .question-card {
-    background: rgb(212, 209, 219);
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e9ecef;
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: white;
+    border-radius: 18px;
+    padding: 35px 45px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(78, 84, 200, 0.1);
+    transition: all 0.3s ease;
 }
 
 .question-card:hover {
@@ -134,7 +147,7 @@
 }
 
 .correct-answer-badge {
-    background: linear-gradient(135deg, #00b09b 0%, #0c9e61 100%);
+    background: linear-gradient(135deg, #048d32 0%, #0fc478 100%);
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -145,9 +158,12 @@
 
 .action-buttons {
     display: flex;
-    gap: 15px;
-    margin-top: 30px;
+    gap: 20px;
+    margin-top: 40px;
     justify-content: center;
+    max-width: 1300px;  /* Giới hạn độ rộng tối đa */
+    margin: 40px auto 0;  /* Căn giữa và thêm margin top */
+    padding: 0 20px;  /* Thêm padding hai bên */
 }
 
 .btn {
@@ -162,9 +178,9 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+    background: linear-gradient(135deg, #4b6cb7 0%, #0d41a8 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(75,108,183,0.3);
+    box-shadow: 0 4px 15px rgba(24, 69, 173, 0.3);
 }
 
 .btn-primary:hover {
@@ -184,22 +200,47 @@
     transform: translateY(-2px);
 }
 
+@media (max-width: 1024px) {
+    .quiz-header {
+        padding: 30px;
+    }
+    
+    .quiz-info {
+        margin: 0 20px;  /* Thêm margin hai bên */
+    }
+}
+p.quiz-info-text{
+    font-size: 1rem;
+    color: #010744;
+}
+p.question-text{
+    font-size: 1rem;
+    font-weight: 500;
+}
+
 @media (max-width: 768px) {
     .quiz-header {
-        padding: 20px;
+        padding: 25px;
     }
     
     .quiz-info {
         grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px;
+        margin: 0 15px;  /* Giảm margin trên mobile */
+    }
+    
+    .questions-list {
+        padding: 0 15px;  /* Giảm padding trên mobile */
+    }
+    
+    .question-card {
+        padding: 25px;
     }
     
     .action-buttons {
         flex-direction: column;
-    }
-    
-    .btn {
-        width: 100%;
-        justify-content: center;
+        padding: 0 15px;  /* Giảm padding trên mobile */
     }
 }
 </style>

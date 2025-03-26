@@ -88,11 +88,11 @@
 
         .container {
             margin-top: 6rem;
-            margin-bottom: 2rem;
+            margin-bottom: 15px;
             padding: 2rem;
             background: white;
             border-radius: 20px;
-            box-shadow: 0 10px 30px var(--shadow);
+            box-shadow: -2px 7px 30px rgb(0 0 0 / 15%);
             flex: 1;
         }
 
@@ -116,7 +116,7 @@
         }
 
         footer {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: #b1b1b1;
             color: white;
             padding: 2rem 0;
             margin-top: auto;
@@ -159,6 +159,166 @@
             color: white;
             font-size: 1.5rem;
             cursor: pointer;
+        }
+
+        .user-profile-nav {
+            position: relative;
+            margin-left: 10px;
+        }
+
+        .profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-trigger:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-avatar i {
+            font-size: 18px;
+            color: white;
+        }
+
+        .profile-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .profile-role {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-left: 5px;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 120%;
+            right: 0;
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        .profile-dropdown.active {
+            display: block;
+        }
+
+        .dropdown-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .profile-info .name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .profile-info .role {
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dropdown-items {
+            padding: 8px;
+        }
+
+        .menu-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-group .dropdown-item:nth-child(1) {
+            color: #4b6ecc;
+        }
+
+        .menu-group .dropdown-item:nth-child(1):hover {
+            background: rgba(75, 110, 204, 0.1);
+            color: #3d5aa9;
+        }
+
+        .menu-group .dropdown-item:nth-child(2) {
+            color: #667eea;
+        }
+
+        .menu-group .dropdown-item:nth-child(2):hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #5361bc;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #eee;
+            margin: 8px 0;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+            margin-top: 8px;
+        }
+
+        .text-danger:hover {
+            background: rgba(220, 53, 69, 0.1) !important;
+            color: #bd2130 !important;
+        }
+
+        .dropdown-item i {
+            font-size: 1.1rem;
+        }
+
+        .menu-group .dropdown-item:nth-child(1) i {
+            color: #4b6ecc;
+        }
+
+        .menu-group .dropdown-item:nth-child(2) i {
+            color: #667eea;
+        }
+
+        .text-danger i {
+            color: #dc3545;
         }
 
         @media (max-width: 768px) {
@@ -209,6 +369,21 @@
                 gap: 1.5rem;
                 text-align: center;
             }
+
+            .profile-trigger {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .profile-dropdown {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                border-radius: 15px 15px 0 0;
+            }
         }
     </style>
 </head>
@@ -226,20 +401,11 @@
                 <i class="fas fa-home"></i>
                 Trang chủ
             </a>
-            <a href="{{ url_for('history') }}">
-                <i class="fas fa-history"></i>
-                Lịch sử bài kiểm tra
-            </a>
-            {% if 'user_id' not in session %}
-                <a href="{{ url_for('login') }}">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Đăng nhập
+            {% if 'user_id' in session %}
+                <a href="{{ url_for('history') }}">
+                    <i class="fas fa-history"></i>
+                    Lịch sử bài kiểm tra
                 </a>
-                <a href="{{ url_for('register') }}">
-                    <i class="fas fa-user-plus"></i>
-                    Đăng ký
-                </a>
-            {% else %}
                 {% if session['role'] == 'teacher' %}
                     <a href="{{ url_for('create_quiz') }}">
                         <i class="fas fa-plus-circle"></i>
@@ -250,9 +416,61 @@
                         Bảng điều khiển
                     </a>
                 {% endif %}
-                <a href="{{ url_for('logout') }}">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Đăng xuất
+                <div class="user-profile-nav">
+                    <button class="profile-trigger" onclick="toggleProfileMenu()">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <span class="profile-name">{{ session['username'] }}</span>
+                        <span class="profile-role">
+                            {% if session['role'] == 'teacher' %}
+                                Giáo viên
+                            {% else %}
+                                Học sinh
+                            {% endif %}
+                        </span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="profile-dropdown" id="profileMenu">
+                        <div class="dropdown-header">
+                            <div class="profile-info">
+                                <span class="name">{{ session['username'] }}</span>
+                                <span class="role">
+                                    {% if session['role'] == 'teacher' %}
+                                        <i class="fas fa-chalkboard-teacher"></i> Giáo viên
+                                    {% else %}
+                                        <i class="fas fa-user-graduate"></i> Học sinh
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="dropdown-items">
+                            <div class="menu-group">
+                                <a href="{{ url_for('profile') }}" class="dropdown-item">
+                                    <i class="fas fa-user"></i>
+                                    Thông tin cá nhân
+                                </a>
+                                <a href="{{ url_for('settings') }}" class="dropdown-item">
+                                    <i class="fas fa-cog"></i>
+                                    Cài đặt tài khoản
+                                </a>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('logout') }}" class="dropdown-item text-danger">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Đăng xuất
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{{ url_for('login') }}">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Đăng nhập
+                </a>
+                <a href="{{ url_for('register') }}">
+                    <i class="fas fa-user-plus"></i>
+                    Đăng ký
                 </a>
             {% endif %}
         </div>
@@ -282,9 +500,6 @@
                     <i class="fab fa-facebook"></i>
                 </a>
                 <a href="#" class="social-icon">
-                    <i class="fab fa-twitter"></i>
-                </a>
-                <a href="#" class="social-icon">
                     <i class="fab fa-instagram"></i>
                 </a>
             </div>
@@ -296,6 +511,20 @@
     <script>
         function toggleMenu() {
             document.querySelector('.nav-links').classList.toggle('active');
+        }
+
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profileMenu');
+            menu.classList.toggle('active');
+
+            document.addEventListener('click', function(event) {
+                const trigger = event.target.closest('.profile-trigger');
+                const dropdown = event.target.closest('.profile-dropdown');
+                
+                if (!trigger && !dropdown && menu.classList.contains('active')) {
+                    menu.classList.remove('active');
+                }
+            });
         }
     </script>
 </body>

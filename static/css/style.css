@@ -124,7 +124,7 @@ body {
 }
 
 .welcome-section h1 {
-    color: #520aa3;
+    color: #590e85;
     flex-grow: 1;  /* Nội dung chính sẽ chiếm không gian còn lại */
     padding: 20px;
     width: 100%;
@@ -246,7 +246,7 @@ body {
 }
 .btn-primary {
     width: auto;
-    background-color: #0a963f !important;
+    background-color: #1a9248 !important;
 }
 .btn-danger {
     background-color: #db1c1c;
@@ -382,8 +382,8 @@ body {
  
 .welcome-message {
     font-size: 20px;
-    font-weight: lighter;
-    color: #5b0766;
+    font-weight: 800;
+    color: #49a2eb;
 }
 
 
