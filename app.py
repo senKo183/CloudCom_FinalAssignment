@@ -6,13 +6,13 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from flask_migrate import Migrate
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
 # Models
 class User(db.Model):
     id = db.Column(db.Integer , primary_key=True)
@@ -54,6 +54,18 @@ class QuizResult(db.Model):
     quiz = db.relationship('Quiz', backref='results', lazy=True)
     student = db.relationship('User', backref='quiz_results', lazy=True)
 
+class UserProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    full_name = db.Column(db.String(100))
+    phone = db.Column(db.String(20))
+    address = db.Column(db.String(200))
+    bio = db.Column(db.Text)
+    avatar = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='profile', lazy=True)
+
 def init_db():
     with app.app_context():
         # Drop all tables
@@ -93,30 +105,51 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        role = request.form.get('role')
+        try:
+            email = request.form['email']
+            username = request.form['username']
+            password = request.form['password']
+            role = request.form['role']
 
-        if password != confirm_password:
-            flash('Mật khẩu không khớp!')
-            return render_template('register.html')
+            # Kiểm tra username và email đã tồn tại
+            existing_user = User.query.filter_by(username=username).first()
+            existing_email = User.query.filter_by(email=email).first()
+            
+            if existing_user:
+                flash('Tên đăng nhập đã tồn tại. Vui lòng chọn tên đăng nhập khác!', 'error')
+                return redirect(url_for('register'))
+            if existing_email:
+                flash('Email đã được sử dụng. Vui lòng dùng email khác!', 'error')
+                return redirect(url_for('register'))
 
-        if User.query.filter_by(email=email).first():
-            flash('Email đã tồn tại!')
-            return render_template('register.html')
+            # Mã hóa mật khẩu
+            hashed_password = generate_password_hash(password)
+            
+            # Tạo user mới
+            new_user = User(
+                email=email,
+                username=username,
+                password=hashed_password,
+                role=role
+            )
+            db.session.add(new_user)
+            db.session.flush()
 
-        user = User(
-            email=email,
-            username=username,
-            password=generate_password_hash(password),
-            role=role
-        )
-        db.session.add(user)
-        db.session.commit()
-        flash('Đăng ký thành công!')
-        return redirect(url_for('login'))
+            # Tạo profile cho user
+            profile = UserProfile(
+                user_id=new_user.id,
+                full_name=username
+            )
+            db.session.add(profile)
+            db.session.commit()
+
+            flash('Đăng ký thành công! Vui lòng đăng nhập.', 'success')
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash('Có lỗi xảy ra. Vui lòng thử lại!', 'error')
+            return redirect(url_for('register'))
 
     return render_template('register.html')
 
@@ -211,7 +244,7 @@ def create_quiz():
         flash('Tạo bài kiểm tra thành công!')
         return redirect(url_for('teacher_dashboard'))
     
-    return render_template('create_quiz_new.html')
+    return render_template('create_quiz.html')
 
 @app.route('/teacher/manage-quizzes')
 def manage_quizzes():
@@ -516,6 +549,73 @@ def quiz_students(quiz_id):
         .all()
     
     return render_template('quiz_students.html', quiz=quiz, results=results)
+
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    user_profile = UserProfile.query.filter_by(user_id=user.id).first()
+    
+    if not user_profile:
+        user_profile = UserProfile(user_id=user.id)
+        db.session.add(user_profile)
+        db.session.commit()
+    
+    return render_template('profile.html', user=user, profile=user_profile)
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def edit_profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    profile = UserProfile.query.filter_by(user_id=user.id).first()
+    
+    if request.method == 'POST':
+        # Cập nhật thông tin profile
+        profile.full_name = request.form.get('full_name')
+        profile.phone = request.form.get('phone')
+        profile.address = request.form.get('address')
+        profile.bio = request.form.get('bio')
+        
+        db.session.commit()
+        flash('Cập nhật thông tin thành công!')
+        return redirect(url_for('profile'))
+    
+    return render_template('edit_profile.html', user=user, profile=profile)
+
+@app.route('/settings')
+def settings():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    return render_template('settings.html', user=user)
+
+@app.route('/settings/password', methods=['POST'])
+def change_password():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.get(session['user_id'])
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    
+    if not check_password_hash(user.password, current_password):
+        flash('Mật khẩu hiện tại không đúng!')
+        return redirect(url_for('settings'))
+    
+    if new_password != confirm_password:
+        flash('Mật khẩu mới không khớp!')
+        return redirect(url_for('settings'))
+    
+    user.password = generate_password_hash(new_password)
+    db.session.commit()
+    flash('Đổi mật khẩu thành công!')
+    return redirect(url_for('settings'))
 
 def main():
     with app.app_context():
