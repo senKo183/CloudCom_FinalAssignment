@@ -3,25 +3,26 @@
 {% block title %}Trang Quản Lý Giáo Viên{% endblock %}
 
 {% block content %}
-<style>
-    .dashboard h1 {
-        color: #334064;
-        /* margin-bottom: 2rem; */
-        margin-bottom: 20px;
-        text-align: center;
-    }
-</style>
 <div class="dashboard">
-    <h1 class="title-dashboard">Quản lý bài kiểm tra</h1>
+    <div class="dashboard-header">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <h1>Quản lý bài kiểm tra</h1>
+    </div>
     
     <div class="dashboard-stats">
         <div class="stat-card">
-            <h3>Tổng số bài kiểm tra</h3>
-            <p class="stat-number">{{ total_quizzes }}</p>
+            <i class="fas fa-file-alt"></i>
+            <div class="stat-info">
+                <h3>Tổng số bài kiểm tra</h3>
+                <p class="stat-number">{{ total_quizzes }}</p>
+            </div>
         </div>
         <div class="stat-card">
-            <h3>Học sinh đã làm bài</h3>
-            <p class="stat-number">{{ total_students }}</p>
+            <i class="fas fa-users"></i>
+            <div class="stat-info">
+                <h3>Học sinh đã làm bài</h3>
+                <p class="stat-number">{{ total_students }}</p>
+            </div>
         </div>
     </div>
 
@@ -42,21 +43,293 @@
     </div>
 
     <div class="recent-quizzes">
-        <h2>Bài Kiểm Tra Gần Đây</h2>
+        <div class="section-header">
+            <i class="fas fa-history"></i>
+            <h2>Bài Kiểm Tra Gần Đây</h2>
+        </div>
         <div class="quiz-list">
             {% if recent_quizzes %}
                 {% for quiz in recent_quizzes %}
                 <div class="quiz-card">
-                    <h3>{{ quiz.title }}</h3>
-                    <p class="quiz-info-text"><b>Thời gian bắt đầu:</b> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p class="quiz-info-text"><b>Thời gian kết thúc:</b> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                    <p class="quiz-info-text"><b>Thời gian làm bài:</b> {{ quiz.duration }} phút</p>
+                    <div class="quiz-card-header">
+                        <i class="fas fa-file-alt"></i>
+                        <h3>{{ quiz.title }}</h3>
+                    </div>
+                    <div class="quiz-info">
+                        <p><i class="fas fa-clock"></i> <b>Bắt đầu:</b> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><i class="fas fa-clock"></i> <b>Kết thúc:</b> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                        <p><i class="fas fa-hourglass-half"></i> <b>Thời gian:</b> {{ quiz.duration }} phút</p>
+                    </div>
                 </div>
                 {% endfor %}
             {% else %}
-                <p>Chưa có bài kiểm tra nào.</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Chưa có bài kiểm tra nào.</p>
+                </div>
             {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+.dashboard {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-top: 2rem;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #02296b;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 1.2rem;
+}
+
+.dashboard-header i {
+    font-size: 2.5rem;
+    color: #667eea;
+    margin-bottom: 0.8rem;
+}
+
+.dashboard-header h1 {
+    color: #5e60db;
+    font-size: large;
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.2rem;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.stat-card i {
+    font-size: 1.8rem;
+    color: #667eea;
+}
+
+.stat-info h3 {
+    color: #4a5568;
+    font-size: 1.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: left;
+    color: #0553d8;
+}
+
+.dashboard-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.action-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.action-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.action-card i {
+    font-size: 2rem;
+    color: #ffffff;
+    
+}
+
+.action-card h2 {
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+    border: none;
+}
+
+.btn-secondary {
+    background: white;
+    color: #ffffff;
+    border: 2px solid #667eea;
+    border-radius: 10px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.recent-quizzes {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.section-header i {
+    font-size: 1.3rem;
+    color: #667eea;
+}
+
+.section-header h2 {
+    color: #2d3748;
+    font-size: 1.3rem;
+}
+
+.quiz-list {
+    display: flex;
+    overflow-x: auto;
+    gap: 1.2rem;
+    padding: 0.5rem 0.25rem;
+    scroll-behavior: smooth;
+}
+
+.quiz-list::-webkit-scrollbar {
+    height: 6px;
+}
+
+.quiz-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.quiz-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 10px;
+}
+
+.quiz-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+.quiz-card {
+    flex: 0 0 280px;
+    background: white;
+    padding: 1.2rem;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.quiz-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.quiz-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.quiz-card-header i {
+    font-size: 1.1rem;
+    color: #667eea;
+}
+
+.quiz-card-header h3 {
+    color: #e1e0e2;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.quiz-info p {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4a5568;
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+}
+
+.quiz-info i {
+    color: #667eea;
+    width: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #718096;
+    border: 2px dashed #e2e8f0;
+    border-radius: 10px;
+    margin: 1rem;
+}
+
+.empty-state i {
+    font-size: 2.5rem;
+    color: #cbd5e0;
+    margin-bottom: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard {
+        padding: 1rem;
+    }
+    
+    .dashboard-stats,
+    .dashboard-actions {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %} 
