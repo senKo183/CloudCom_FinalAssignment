@@ -6,7 +6,7 @@
 <style>
 .container {
     max-width: 1400px;
-    margin: 30px auto 2rem auto; /* Giảm margin-top xuống còn 30px */
+    margin: 30px auto 2rem auto;
     padding: 2.5rem 3.5rem;
     background: white;
     border-radius: 15px;
@@ -57,12 +57,13 @@ h1 i {
 
 .btn-secondary {
     background: #f8f9fa;
-    color: #f8f8f8;
+    color: white;
     border: 1px solid #e0e0e0;
 }
 
 .btn-secondary:hover {
     background: #f1f3f5;
+    color: white;
 }
 
 .quiz-list-manage {
@@ -72,14 +73,14 @@ h1 i {
 }
 
 .quiz-card {
-    padding: 3rem 3.5rem; /* Tăng padding */
+    padding: 3rem 3.5rem;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     border-radius: 12px;
     background: #f8f9fa;
     transition: all 0.3s ease;
-    margin-bottom: 2rem; /* Tăng margin bottom */
+    margin-bottom: 2rem;
 }
 
 .quiz-card:hover {
@@ -89,20 +90,26 @@ h1 i {
 
 .quiz-info {
     flex: 1;
-    margin-right: 4rem; /* Tăng khoảng cách với phần actions */
+    margin-right: 4rem;
 }
 
 .quiz-info h3 {
-    font-size: 2rem; /* Tăng kích thước tiêu đề quiz */
-    color: #ffffff;
-    margin-bottom: 2.5rem;
+    font-size: 2rem;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
     font-weight: 600;
 }
 
+.quiz-code {
+    font-size: 1.4rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
 .quiz-info-text {
-    font-size: 1.4rem; /* Tăng kích thước text */
+    font-size: 1.4rem;
     color: #4a5568;
-    margin: 1.5rem 0; /* Tăng margin */
+    margin: 1.5rem 0;
     display: flex;
     align-items: center;
     gap: 1.2rem;
@@ -110,20 +117,20 @@ h1 i {
 
 .quiz-info-text i {
     color: #4CAF50;
-    width: 28px; /* Tăng kích thước icon */
-    font-size: 1.5rem; /* Tăng kích thước icon */
+    width: 28px;
+    font-size: 1.5rem;
 }
 
 .quiz-actions {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem; /* Tăng khoảng cách giữa các nút */
-    min-width: 220px; /* Tăng độ rộng tối thiểu */
+    gap: 1.2rem;
+    min-width: 220px;
 }
 
 .btn-small {
-    padding: 1.2rem 2rem; /* Tăng padding của nút */
-    font-size: 1.2rem; /* Tăng kích thước chữ */
+    padding: 1.2rem 2rem;
+    font-size: 1.2rem;
     width: 100%;
     justify-content: center;
     transition: all 0.2s ease;
@@ -178,7 +185,7 @@ h1 i {
 
 @media (max-width: 992px) {
     .container {
-        margin: 25px 1.5rem 1.5rem 1.5rem; /* Giảm margin trên thiết bị nhỏ hơn */
+        margin: 25px 1.5rem 1.5rem 1.5rem;
     }
 
     .quiz-card {
@@ -196,7 +203,7 @@ h1 i {
 
 @media (max-width: 768px) {
     .container {
-        margin: 20px 1rem 1rem 1rem; /* Giảm margin trên mobile */
+        margin: 20px 1rem 1rem 1rem;
     }
 
     .quiz-card {
@@ -250,6 +257,9 @@ h1 i {
             <div class="quiz-card">
                 <div class="quiz-info">
                     <h3>{{ quiz.title }}</h3>
+                    {% if quiz.quiz_code %}
+                    <div class="quiz-code">Quiz Code: {{ quiz.quiz_code }}</div>
+                    {% endif %}
                     <p class="quiz-info-text">
                         <i class="fas fa-clock"></i>
                         <strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}

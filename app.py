@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
+import random
+import string
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -24,10 +26,12 @@ class User(db.Model):
 class Quiz(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
+    quiz_code = db.Column(db.String(10), unique=True, nullable=True, server_default=None)  # Make it nullable with default None
     teacher_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=False)
     duration = db.Column(db.Integer, nullable=False)  # in minutes
+    max_attempts = db.Column(db.Integer, nullable=True, default=None)  # Số lần làm bài tối đa
     questions = db.relationship('Question', backref='quiz', lazy=True)
     teacher = db.relationship('User', backref='quizzes', lazy=True)
 
@@ -189,60 +193,79 @@ def teacher_dashboard():
                          total_students=total_students,
                          recent_quizzes=recent_quizzes)
 
-@app.route('/create-quiz', methods=['GET', 'POST'])
+def generate_quiz_code():
+    """Generate a random 4-character quiz code"""
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase, k=4))
+        if not Quiz.query.filter_by(quiz_code=code).first():
+            return code
+
+@app.route('/create_quiz', methods=['GET', 'POST'])
 def create_quiz():
-    if 'user_id' not in session or session['role'] != 'teacher':
-        flash('Bạn không có quyền truy cập trang này!')
-        return redirect(url_for('home'))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     
+    user = User.query.get(session['user_id'])
+    if user.role != 'teacher':
+        flash('Only teachers can create quizzes')
+        return redirect(url_for('home'))
+
     if request.method == 'POST':
-        title = request.form.get('title')
-        start_time = datetime.fromisoformat(request.form.get('start_time').replace('Z', '+00:00'))
-        end_time = datetime.fromisoformat(request.form.get('end_time').replace('Z', '+00:00'))
-        duration = int(request.form.get('duration'))
-        questions = request.form.getlist('questions[]')
-        question_types = request.form.getlist('question_types[]')
-        correct_answers = request.form.getlist('correct_answers[]')
-        
-        # Tạo bài kiểm tra mới
-        quiz = Quiz(
-            title=title,
-            start_time=start_time,
-            end_time=end_time,
-            duration=duration,
-            teacher_id=session['user_id']
-        )
-        db.session.add(quiz)
-        db.session.commit()
-        
-        # Thêm các câu hỏi
-        for i in range(len(questions)):
-            question = Question(
-                quiz_id=quiz.id,
-                question_text=questions[i],
-                question_type=question_types[i],
-                correct_answer=correct_answers[i]
+        try:
+            # Tạo bài kiểm tra mới
+            title = request.form['title']
+            start_time = datetime.strptime(request.form['start_time'], '%Y-%m-%dT%H:%M')
+            end_time = datetime.strptime(request.form['end_time'], '%Y-%m-%dT%H:%M')
+            duration = int(request.form['duration'])
+            max_attempts = request.form.get('max_attempts')  # Lấy giá trị max_attempts từ form
+            
+            quiz = Quiz(
+                title=title,
+                teacher_id=session['user_id'],
+                start_time=start_time,
+                end_time=end_time,
+                duration=duration,
+                max_attempts=int(max_attempts) if max_attempts else None,  # Chuyển đổi sang số nếu có giá trị
+                quiz_code=generate_quiz_code()
             )
-            db.session.add(question)
-            db.session.commit()  # Commit question to get its ID
             
-            # Nếu là câu hỏi trắc nghiệm, thêm các lựa chọn
-            if question_types[i] == 'multiple_choice':
-                for j in range(4):
-                    option = request.form.getlist(f'option{j+1}[]')[i]
-                    answer = Answer(
-                        question_id=question.id,
-                        answer_text=option
-                    )
-                    db.session.add(answer)
+            db.session.add(quiz)
+            db.session.flush()
             
-            elif question_types[i] == 'fill_in_blank':
-                # Câu hỏi điền vào chỗ trống chỉ cần lưu đáp án đúng
-                pass
-        
-        db.session.commit()
-        flash('Tạo bài kiểm tra thành công!')
-        return redirect(url_for('teacher_dashboard'))
+            # Lấy dữ liệu từ form
+            questions = request.form.getlist('questions[]')
+            question_types = request.form.getlist('question_types[]')
+            correct_answers = request.form.getlist('correct_answers[]')
+            
+            # Thêm câu hỏi và câu trả lời
+            for i in range(len(questions)):
+                question = Question(
+                    quiz_id=quiz.id,
+                    question_text=questions[i],
+                    question_type=question_types[i],
+                    correct_answer=correct_answers[i]
+                )
+                db.session.add(question)
+                db.session.flush()
+                
+                if question_types[i] == 'multiple_choice':
+                    for j in range(4):
+                        option = request.form.getlist(f'option{j+1}[]')[i]
+                        if option:
+                            answer = Answer(
+                                question_id=question.id,
+                                answer_text=option
+                            )
+                            db.session.add(answer)
+            
+            db.session.commit()
+            flash(f'Quiz created successfully! Quiz Code: {quiz.quiz_code}')
+            return redirect(url_for('manage_quizzes'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Có lỗi xảy ra khi tạo bài kiểm tra: {str(e)}')
+            return redirect(url_for('create_quiz'))
     
     return render_template('create_quiz.html')
 
@@ -312,6 +335,8 @@ def edit_quiz(quiz_id):
             quiz.start_time = datetime.fromisoformat(request.form.get('start_time').replace('Z', '+00:00'))
             quiz.end_time = datetime.fromisoformat(request.form.get('end_time').replace('Z', '+00:00'))
             quiz.duration = int(request.form.get('duration'))
+            max_attempts = request.form.get('max_attempts')
+            quiz.max_attempts = int(max_attempts) if max_attempts else None
             
             # Lưu thay đổi thông tin cơ bản
             db.session.commit()
@@ -376,20 +401,28 @@ def delete_quiz(quiz_id):
         flash('Bạn không có quyền xóa bài kiểm tra này!')
         return redirect(url_for('manage_quizzes'))
     
-    # Lấy danh sách câu hỏi của bài kiểm tra
-    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+    try:
+        # Xóa các kết quả bài kiểm tra trước
+        QuizResult.query.filter_by(quiz_id=quiz_id).delete()
+        
+        # Lấy danh sách câu hỏi của bài kiểm tra
+        questions = Question.query.filter_by(quiz_id=quiz_id).all()
+        
+        # Xóa các câu trả lời và câu hỏi
+        for question in questions:
+            Answer.query.filter_by(question_id=question.id).delete()
+        
+        Question.query.filter_by(quiz_id=quiz_id).delete()
+        
+        # Xóa bài kiểm tra
+        db.session.delete(quiz)
+        db.session.commit()
+        
+        flash('Xóa bài kiểm tra thành công!')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Có lỗi xảy ra khi xóa bài kiểm tra: {str(e)}')
     
-    # Xóa các câu trả lời và câu hỏi
-    for question in questions:
-        Answer.query.filter_by(question_id=question.id).delete()
-    
-    Question.query.filter_by(quiz_id=quiz_id).delete()
-    
-    # Xóa bài kiểm tra
-    db.session.delete(quiz)
-    db.session.commit()
-    
-    flash('Xóa bài kiểm tra thành công!')
     return redirect(url_for('manage_quizzes'))
 
 @app.route('/search')
@@ -407,9 +440,8 @@ def search_quiz():
                          quizzes=quizzes, 
                          keyword=keyword)
 
-# Thêm route để tham gia bài kiểm tra (nếu chưa có)
 @app.route('/join-quiz/<int:quiz_id>', methods=['POST'])
-def join_quiz(quiz_id):
+def join_quiz_by_id(quiz_id):
     if 'user_id' not in session:
         flash('Vui lòng đăng nhập để tham gia bài kiểm tra!')
         return redirect(url_for('login'))
@@ -432,32 +464,72 @@ def join_quiz(quiz_id):
     
     return redirect(url_for('take_quiz', quiz_id=quiz_id))
 
-@app.route('/quiz/take/<int:quiz_id>')
-def take_quiz(quiz_id):
+@app.route('/student/join-quiz', methods=['GET', 'POST'])
+def student_join_quiz():
     if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để tham gia bài kiểm tra!')
+        flash('Vui lòng đăng nhập để tham gia bài kiểm tra!', 'error')
         return redirect(url_for('login'))
     
     if session['role'] != 'student':
-        flash('Chỉ học sinh mới có thể tham gia bài kiểm tra!')
+        flash('Chỉ học sinh mới có thể tham gia bài kiểm tra!', 'error')
         return redirect(url_for('home'))
-    
-    # Lấy thông tin bài kiểm tra
+
+    if request.method == 'POST':
+        quiz_code = request.form.get('quiz_code')
+        quiz = Quiz.query.filter_by(quiz_code=quiz_code).first()
+        
+        if not quiz:
+            flash('Mã bài kiểm tra không hợp lệ!', 'error')
+            return redirect(url_for('home'))
+            
+        # Kiểm tra thời gian
+        now = datetime.now()
+        if now < quiz.start_time:
+            flash('Bài kiểm tra chưa bắt đầu!', 'error')
+            return redirect(url_for('home'))
+        if now > quiz.end_time:
+            flash('Bài kiểm tra đã kết thúc!', 'error')
+            return redirect(url_for('home'))
+            
+        return redirect(url_for('take_quiz', quiz_id=quiz.id))
+        
+    return render_template('join_quiz.html')
+
+@app.route('/quiz/take/<int:quiz_id>')
+def take_quiz(quiz_id):
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để làm bài kiểm tra!', 'error')
+        return redirect(url_for('login'))
+        
+    if session['role'] != 'student':
+        flash('Chỉ học sinh mới có thể làm bài kiểm tra!', 'error')
+        return redirect(url_for('home'))
+        
     quiz = Quiz.query.get_or_404(quiz_id)
     
     # Kiểm tra thời gian
     now = datetime.now()
     if now < quiz.start_time:
-        flash('Bài kiểm tra chưa bắt đầu!')
+        flash('Bài kiểm tra chưa bắt đầu!', 'error')
         return redirect(url_for('home'))
-    
     if now > quiz.end_time:
-        flash('Bài kiểm tra đã kết thúc!')
+        flash('Bài kiểm tra đã kết thúc!', 'error')
         return redirect(url_for('home'))
+        
+    # Kiểm tra số lần làm bài
+    if quiz.max_attempts is not None:
+        attempts_count = QuizResult.query.filter_by(
+            quiz_id=quiz_id,
+            student_id=session['user_id']
+        ).count()
+        
+        if attempts_count >= quiz.max_attempts:
+            flash(f'Bạn đã đạt giới hạn số lần làm bài ({quiz.max_attempts} lần)!', 'error')
+            return redirect(url_for('home'))
     
-    # Lấy danh sách câu hỏi
+    # Lấy danh sách câu hỏi của bài kiểm tra
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
-    
+        
     return render_template('take_quiz.html', quiz=quiz, questions=questions)
 
 @app.route('/quiz/submit/<int:quiz_id>', methods=['POST'])
@@ -616,6 +688,37 @@ def change_password():
     db.session.commit()
     flash('Đổi mật khẩu thành công!')
     return redirect(url_for('settings'))
+
+@app.route('/join-quiz', methods=['GET', 'POST'])
+def join_quiz():
+    if 'user_id' not in session:
+        flash('Vui lòng đăng nhập để tham gia bài kiểm tra!', 'error')
+        return redirect(url_for('login'))
+    
+    if session['role'] != 'student':
+        flash('Chỉ học sinh mới có thể tham gia bài kiểm tra!', 'error')
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        quiz_code = request.form.get('quiz_code')
+        quiz = Quiz.query.filter_by(quiz_code=quiz_code).first()
+        
+        if not quiz:
+            flash('Mã bài kiểm tra không hợp lệ!', 'error')
+            return redirect(url_for('join_quiz'))
+            
+        # Kiểm tra thời gian
+        now = datetime.now()
+        if now < quiz.start_time:
+            flash('Bài kiểm tra chưa bắt đầu!', 'error')
+            return redirect(url_for('join_quiz'))
+        if now > quiz.end_time:
+            flash('Bài kiểm tra đã kết thúc!', 'error')
+            return redirect(url_for('join_quiz'))
+            
+        return redirect(url_for('take_quiz', quiz_id=quiz.id))
+        
+    return render_template('join_quiz.html')
 
 def main():
     with app.app_context():

@@ -32,6 +32,12 @@
                     <label for="duration"><i class="fas fa-hourglass-half"></i> Thời gian làm bài (phút):</label>
                     <input type="number" id="duration" name="duration" min="1" required>
                 </div>
+
+                <div class="form-group">
+                    <label for="max_attempts"><i class="fas fa-redo"></i> Số lần làm bài tối đa:</label>
+                    <input type="number" id="max_attempts" name="max_attempts" min="1" placeholder="Để trống nếu không giới hạn">
+                    <small class="form-text text-muted">Nếu để trống, học sinh có thể làm bài không giới hạn số lần</small>
+                </div>
             </div>
         </div>
 
@@ -324,22 +330,30 @@ textarea {
 function toggleAnswerType(select) {
     const questionItem = select.closest('.question-item');
     const multipleChoiceOptions = questionItem.querySelector('.multiple-choice-options');
+    const correctAnswerInput = questionItem.querySelector('input[name="correct_answers[]"]');
     
     if (select.value === 'multiple_choice') {
         multipleChoiceOptions.style.display = 'block';
+        // Bắt buộc các trường lựa chọn
+        multipleChoiceOptions.querySelectorAll('input[type="text"]').forEach(input => {
+            input.required = true;
+        });
     } else {
         multipleChoiceOptions.style.display = 'none';
+        // Bỏ bắt buộc các trường lựa chọn
+        multipleChoiceOptions.querySelectorAll('input[type="text"]').forEach(input => {
+            input.required = false;
+        });
     }
 }
 
 function addQuestion() {
     const container = document.getElementById('questions-container');
-    const questionCount = container.getElementsByClassName('question-item').length + 1;
+    const questionCount = container.querySelectorAll('.question-item').length + 1;
     
     const newQuestion = document.createElement('div');
     newQuestion.className = 'question-item';
     newQuestion.innerHTML = `
-        <hr>
         <div class="question-header">
             <i class="fas fa-list-ol"></i>
             <span>Câu hỏi ${questionCount}</span>
@@ -390,5 +404,13 @@ function addQuestion() {
     
     container.appendChild(newQuestion);
 }
+
+// Khởi tạo trạng thái ban đầu cho câu hỏi đầu tiên
+document.addEventListener('DOMContentLoaded', function() {
+    const firstQuestionType = document.querySelector('.question-type');
+    if (firstQuestionType) {
+        toggleAnswerType(firstQuestionType);
+    }
+});
 </script>
 {% endblock %} 
