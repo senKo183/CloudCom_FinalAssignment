@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from flask_migrate import Migrate
@@ -32,6 +32,7 @@ class Quiz(db.Model):
     end_time = db.Column(db.DateTime, nullable=False)
     duration = db.Column(db.Integer, nullable=False)  # in minutes
     max_attempts = db.Column(db.Integer, nullable=True, default=None)  # Số lần làm bài tối đa
+    is_public = db.Column(db.Boolean, default=False)  # Thêm trường is_public
     questions = db.relationship('Question', backref='quiz', lazy=True)
     teacher = db.relationship('User', backref='quizzes', lazy=True)
 
@@ -69,6 +70,16 @@ class UserProfile(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user = db.relationship('User', backref='profile', lazy=True)
+
+class PasswordResetToken(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(100), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    
+    user = db.relationship('User', backref='reset_tokens', lazy=True)
 
 def init_db():
     with app.app_context():
@@ -218,6 +229,7 @@ def create_quiz():
             end_time = datetime.strptime(request.form['end_time'], '%Y-%m-%dT%H:%M')
             duration = int(request.form['duration'])
             max_attempts = request.form.get('max_attempts')  # Lấy giá trị max_attempts từ form
+            is_public = request.form.get('is_public') == 'on'  # Lấy giá trị is_public từ form
             
             quiz = Quiz(
                 title=title,
@@ -226,6 +238,7 @@ def create_quiz():
                 end_time=end_time,
                 duration=duration,
                 max_attempts=int(max_attempts) if max_attempts else None,  # Chuyển đổi sang số nếu có giá trị
+                is_public=is_public,  # Thêm trường is_public
                 quiz_code=generate_quiz_code()
             )
             
@@ -297,17 +310,16 @@ def history():
 
 @app.route('/view-quiz/<int:quiz_id>')
 def view_quiz(quiz_id):
-    if 'user_id' not in session or session['role'] != 'teacher':
-        flash('Bạn không có quyền truy cập trang này!')
-        return redirect(url_for('home'))
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     
-    # Lấy thông tin bài kiểm tra
     quiz = Quiz.query.get_or_404(quiz_id)
+    user = User.query.get(session['user_id'])
     
-    # Kiểm tra xem người dùng có phải là chủ sở hữu của bài kiểm tra không
-    if quiz.teacher_id != session['user_id']:
-        flash('Bạn không có quyền xem bài kiểm tra này!')
-        return redirect(url_for('manage_quizzes'))
+    # Kiểm tra quyền truy cập
+    if user.role != 'teacher' or quiz.teacher_id != user.id:
+        flash('Bạn không có quyền truy cập bài kiểm tra này!')
+        return redirect(url_for('home'))
     
     # Lấy danh sách câu hỏi của bài kiểm tra
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
@@ -431,7 +443,7 @@ def search_quiz():
     if not keyword:
         return redirect(url_for('home'))
     
-    # Tìm kiếm bài kiểm tra theo tiêu đề và join với bảng User để lấy thông tin giáo viên
+    # Tìm kiếm tất cả bài kiểm tra
     quizzes = Quiz.query.join(User, Quiz.teacher_id == User.id)\
                        .filter(Quiz.title.ilike(f'%{keyword}%'))\
                        .all()
@@ -440,96 +452,97 @@ def search_quiz():
                          quizzes=quizzes, 
                          keyword=keyword)
 
-@app.route('/join-quiz/<int:quiz_id>', methods=['POST'])
-def join_quiz_by_id(quiz_id):
-    if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để tham gia bài kiểm tra!')
-        return redirect(url_for('login'))
-    
-    if session['role'] != 'student':
-        flash('Chỉ học sinh mới có thể tham gia bài kiểm tra!')
-        return redirect(url_for('home'))
-    
-    quiz = Quiz.query.get_or_404(quiz_id)
-    
-    # Kiểm tra thời gian
-    now = datetime.now()
-    if now < quiz.start_time:
-        flash('Bài kiểm tra chưa bắt đầu!')
-        return redirect(url_for('home'))
-    
-    if now > quiz.end_time:
-        flash('Bài kiểm tra đã kết thúc!')
-        return redirect(url_for('home'))
-    
-    return redirect(url_for('take_quiz', quiz_id=quiz_id))
-
-@app.route('/student/join-quiz', methods=['GET', 'POST'])
-def student_join_quiz():
+@app.route('/join_quiz', methods=['GET', 'POST'])
+def join_quiz():
     if 'user_id' not in session:
         flash('Vui lòng đăng nhập để tham gia bài kiểm tra!', 'error')
         return redirect(url_for('login'))
-    
-    if session['role'] != 'student':
-        flash('Chỉ học sinh mới có thể tham gia bài kiểm tra!', 'error')
-        return redirect(url_for('home'))
 
     if request.method == 'POST':
         quiz_code = request.form.get('quiz_code')
         quiz = Quiz.query.filter_by(quiz_code=quiz_code).first()
-        
+
         if not quiz:
-            flash('Mã bài kiểm tra không hợp lệ!', 'error')
-            return redirect(url_for('home'))
-            
+            flash('Mã bài kiểm tra không tồn tại!', 'error')
+            return redirect(url_for('join_quiz'))
+
         # Kiểm tra thời gian
-        now = datetime.now()
-        if now < quiz.start_time:
+        current_time = datetime.now()  # Sử dụng datetime.now() thay vì utcnow()
+        if current_time < quiz.start_time:
             flash('Bài kiểm tra chưa bắt đầu!', 'error')
-            return redirect(url_for('home'))
-        if now > quiz.end_time:
-            flash('Bài kiểm tra đã kết thúc!', 'error')
-            return redirect(url_for('home'))
-            
-        return redirect(url_for('take_quiz', quiz_id=quiz.id))
+            return redirect(url_for('join_quiz'))
         
+        if current_time > quiz.end_time:
+            flash('Bài kiểm tra đã kết thúc!', 'error')
+            return redirect(url_for('join_quiz'))
+
+        # Kiểm tra số lần làm bài
+        if quiz.max_attempts:
+            attempt_count = QuizResult.query.filter_by(
+                quiz_id=quiz.id,
+                student_id=session['user_id']
+            ).count()
+            
+            if attempt_count >= quiz.max_attempts:
+                flash(f'Bạn đã vượt quá số lần làm bài cho phép ({quiz.max_attempts} lần)!', 'error')
+                return redirect(url_for('join_quiz'))
+
+        # Chuyển hướng đến trang làm bài với mã bài kiểm tra
+        return redirect(url_for('take_quiz', quiz_id=quiz.id, quiz_code=quiz_code))
+
     return render_template('join_quiz.html')
 
-@app.route('/quiz/take/<int:quiz_id>')
+@app.route('/take_quiz/<int:quiz_id>')
 def take_quiz(quiz_id):
     if 'user_id' not in session:
         flash('Vui lòng đăng nhập để làm bài kiểm tra!', 'error')
         return redirect(url_for('login'))
-        
-    if session['role'] != 'student':
-        flash('Chỉ học sinh mới có thể làm bài kiểm tra!', 'error')
-        return redirect(url_for('home'))
-        
+
     quiz = Quiz.query.get_or_404(quiz_id)
     
+    # Kiểm tra quyền truy cập
+    if session['role'] == 'student':
+        if not quiz.is_public:
+            # Nếu là bài kiểm tra riêng tư, kiểm tra mã
+            quiz_code = request.args.get('quiz_code')
+            if not quiz_code or quiz_code != quiz.quiz_code:
+                flash('Bài kiểm tra này ở chế độ riêng tư. Vui lòng sử dụng mã bài kiểm tra để tham gia!', 'error')
+                return redirect(url_for('join_quiz'))
+
     # Kiểm tra thời gian
-    now = datetime.now()
-    if now < quiz.start_time:
+    current_time = datetime.now()  # Sử dụng datetime.now() thay vì utcnow()
+    if current_time < quiz.start_time:
         flash('Bài kiểm tra chưa bắt đầu!', 'error')
         return redirect(url_for('home'))
-    if now > quiz.end_time:
+    
+    if current_time > quiz.end_time:
         flash('Bài kiểm tra đã kết thúc!', 'error')
         return redirect(url_for('home'))
-        
+
     # Kiểm tra số lần làm bài
-    if quiz.max_attempts is not None:
-        attempts_count = QuizResult.query.filter_by(
-            quiz_id=quiz_id,
+    if quiz.max_attempts:
+        attempt_count = QuizResult.query.filter_by(
+            quiz_id=quiz.id,
             student_id=session['user_id']
         ).count()
         
-        if attempts_count >= quiz.max_attempts:
-            flash(f'Bạn đã đạt giới hạn số lần làm bài ({quiz.max_attempts} lần)!', 'error')
+        if attempt_count >= quiz.max_attempts:
+            flash(f'Bạn đã vượt quá số lần làm bài cho phép ({quiz.max_attempts} lần)!', 'error')
             return redirect(url_for('home'))
-    
+
     # Lấy danh sách câu hỏi của bài kiểm tra
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
-        
+    
+    # Debug: In ra số lượng câu hỏi
+    print(f"Number of questions: {len(questions)}")
+    for q in questions:
+        print(f"Question {q.id}: {q.question_text}")
+        print(f"Type: {q.question_type}")
+        if q.question_type == 'multiple_choice':
+            print("Answers:")
+            for a in q.answers:
+                print(f"- {a.answer_text}")
+
     return render_template('take_quiz.html', quiz=quiz, questions=questions)
 
 @app.route('/quiz/submit/<int:quiz_id>', methods=['POST'])
@@ -689,36 +702,82 @@ def change_password():
     flash('Đổi mật khẩu thành công!')
     return redirect(url_for('settings'))
 
-@app.route('/join-quiz', methods=['GET', 'POST'])
-def join_quiz():
-    if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để tham gia bài kiểm tra!', 'error')
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user = User.query.filter_by(email=email).first()
+        
+        if user:
+            # Generate a unique token
+            token = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+            expires_at = datetime.utcnow() + timedelta(hours=1)  # Token expires in 1 hour
+            
+            # Create password reset token
+            reset_token = PasswordResetToken(
+                user_id=user.id,
+                token=token,
+                expires_at=expires_at
+            )
+            db.session.add(reset_token)
+            db.session.commit()
+            
+            # Redirect directly to reset password page
+            return redirect(url_for('reset_password', token=token))
+        
+        flash('Email không tồn tại trong hệ thống.', 'error')
+    return render_template('forgot_password.html')
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    reset_token = PasswordResetToken.query.filter_by(token=token, used=False).first()
+    
+    if not reset_token:
+        flash('Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.', 'error')
+        return redirect(url_for('forgot_password'))
+    
+    if datetime.utcnow() > reset_token.expires_at:
+        flash('Link đặt lại mật khẩu đã hết hạn.', 'error')
+        return redirect(url_for('forgot_password'))
+    
+    if request.method == 'POST':
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if password != confirm_password:
+            flash('Mật khẩu xác nhận không khớp.', 'error')
+            return render_template('reset_password.html')
+        
+        # Update user's password
+        reset_token.user.password = generate_password_hash(password)
+        reset_token.used = True
+        db.session.commit()
+        
+        flash('Mật khẩu đã được đặt lại thành công. Vui lòng đăng nhập.', 'success')
         return redirect(url_for('login'))
     
-    if session['role'] != 'student':
-        flash('Chỉ học sinh mới có thể tham gia bài kiểm tra!', 'error')
-        return redirect(url_for('home'))
+    return render_template('reset_password.html')
 
-    if request.method == 'POST':
-        quiz_code = request.form.get('quiz_code')
-        quiz = Quiz.query.filter_by(quiz_code=quiz_code).first()
-        
-        if not quiz:
-            flash('Mã bài kiểm tra không hợp lệ!', 'error')
-            return redirect(url_for('join_quiz'))
-            
-        # Kiểm tra thời gian
-        now = datetime.now()
-        if now < quiz.start_time:
-            flash('Bài kiểm tra chưa bắt đầu!', 'error')
-            return redirect(url_for('join_quiz'))
-        if now > quiz.end_time:
-            flash('Bài kiểm tra đã kết thúc!', 'error')
-            return redirect(url_for('join_quiz'))
-            
-        return redirect(url_for('take_quiz', quiz_id=quiz.id))
-        
-    return render_template('join_quiz.html')
+@app.route('/quiz/<int:quiz_id>/toggle-visibility')
+def toggle_quiz_visibility(quiz_id):
+    if 'user_id' not in session or session['role'] != 'teacher':
+        flash('Bạn không có quyền thực hiện hành động này!')
+        return redirect(url_for('home'))
+    
+    quiz = Quiz.query.get_or_404(quiz_id)
+    
+    # Kiểm tra quyền truy cập
+    if quiz.teacher_id != session['user_id']:
+        flash('Bạn không có quyền thay đổi trạng thái bài kiểm tra này!')
+        return redirect(url_for('manage_quizzes'))
+    
+    # Đảo ngược trạng thái công khai
+    quiz.is_public = not quiz.is_public
+    db.session.commit()
+    
+    status = "công khai" if quiz.is_public else "riêng tư"
+    flash(f'Trạng thái bài kiểm tra đã được thay đổi thành {status}!')
+    return redirect(url_for('manage_quizzes'))
 
 def main():
     with app.app_context():

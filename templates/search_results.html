@@ -14,6 +14,10 @@
                     <div class="quiz-header">
                         <h3>{{ quiz.title }}</h3>
                         <p class="teacher-name">Giáo viên: {{ quiz.teacher.username }}</p>
+                        <span class="visibility-badge {{ 'public' if quiz.is_public else 'private' }}">
+                            <i class="fas {{ 'fa-globe' if quiz.is_public else 'fa-lock' }}"></i>
+                            {{ 'Công khai' if quiz.is_public else 'Riêng tư' }}
+                        </span>
                     </div>
                     <div class="quiz-info">
                         <p><i class="fas fa-clock"></i> Thời gian: {{ quiz.duration }} phút</p>
@@ -22,9 +26,26 @@
                     </div>
                     {% if session['role'] == 'student' %}
                     <div class="quiz-actions">
-                        <form method="POST" action="{{ url_for('join_quiz', quiz_id=quiz.id) }}">
-                            <button type="submit" class="btn btn-join">Tham gia</button>
-                        </form>
+                        {% if quiz.is_public %}
+                            <a href="{{ url_for('take_quiz', quiz_id=quiz.id) }}" class="btn btn-join">
+                                <i class="fas fa-door-open"></i> Tham gia
+                            </a>
+                        {% else %}
+                            <form method="POST" action="{{ url_for('join_quiz') }}" class="private-quiz-form">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           name="quiz_code" 
+                                           class="form-control quiz-code-input" 
+                                           placeholder="Nhập mã bài kiểm tra"
+                                           maxlength="4"
+                                           pattern="[A-Z]{4}"
+                                           required>
+                                    <button type="submit" class="btn btn-join">
+                                        <i class="fas fa-door-open"></i> Tham gia
+                                    </button>
+                                </div>
+                            </form>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -75,6 +96,26 @@
     margin: 0;
 }
 
+.visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+.visibility-badge.public {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.visibility-badge.private {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
 .quiz-info {
     flex-grow: 1;
     margin-bottom: 15px;
@@ -107,6 +148,9 @@
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-join:hover {
@@ -120,10 +164,53 @@
     transform: translateY(0);
 }
 
+.private-notice {
+    color: #c62828;
+    background-color: #ffebee;
+    padding: 10px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9em;
+}
+
+.private-notice i {
+    color: #c62828;
+}
+
 @media (max-width: 768px) {
     .col-md-6 {
         margin-bottom: 20px;
     }
+}
+
+.private-quiz-form {
+    margin-top: 10px;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.quiz-code-input {
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    width: 120px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.quiz-code-input:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 </style>
 {% endblock %} 
