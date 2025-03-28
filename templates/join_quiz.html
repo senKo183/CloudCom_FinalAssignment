@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Tham Gia Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<style>
+.join-quiz-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+}
+
+.join-quiz-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.join-quiz-header h1 {
+    color: #2c3e50;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.join-quiz-header p {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.quiz-code-input {
+    margin-bottom: 2rem;
+}
+
+.quiz-code-input label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.quiz-code-input input {
+    width: 100%;
+    padding: 1rem;
+    font-size: 2rem;
+    text-align: center;
+    letter-spacing: 0.5em;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-transform: uppercase;
+}
+
+.quiz-code-input input:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: #5a6fd6;
+    transform: translateY(-2px);
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+</style>
+
+<div class="join-quiz-container">
+    <div class="join-quiz-header">
+        <h1>Tham Gia Bài Kiểm Tra</h1>
+        <p>Nhập mã bài kiểm tra để bắt đầu</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('student_join_quiz') }}">
+        <div class="quiz-code-input">
+            <label for="quiz_code">Mã Bài Kiểm Tra:</label>
+            <input type="text" 
+                   id="quiz_code" 
+                   name="quiz_code" 
+                   maxlength="4" 
+                   pattern="[A-Z]{4}" 
+                   required 
+                   placeholder="XXXX"
+                   autocomplete="off">
+        </div>
+        <button type="submit" class="submit-btn">Tham Gia</button>
+    </form>
+</div>
+{% endblock %} 
