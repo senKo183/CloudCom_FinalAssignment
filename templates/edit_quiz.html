@@ -31,9 +31,14 @@
         </div>
 
         <div class="form-group">
-            <label for="duration">Thời gian làm bài (phút):</label>
-            <input type="number" id="duration" name="duration" min="1" 
-                   value="{{ quiz.duration }}" required>
+            <label for="duration"><i class="fas fa-hourglass-half"></i> Thời gian làm bài (phút):</label>
+            <input type="number" id="duration" name="duration" min="1" value="{{ quiz.duration }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="max_attempts"><i class="fas fa-redo"></i> Số lần làm bài tối đa:</label>
+            <input type="number" id="max_attempts" name="max_attempts" min="1" value="{{ quiz.max_attempts if quiz.max_attempts else '' }}" placeholder="Để trống nếu không giới hạn">
+            <small class="form-text text-muted">Nếu để trống, học sinh có thể làm bài không giới hạn số lần</small>
         </div>
 
         <div id="questions-container">

@@ -35,7 +35,7 @@
                 </form>
 
                 <!-- Form nhập mã bài kiểm tra và nút tham gia -->
-                <form method="POST" class="quiz-join-form">
+                <form method="POST" action="{{ url_for('student_join_quiz') }}" class="quiz-join-form">
                     <div class="input-container"> 
                         <input type="text" id="quiz_code" name="quiz_code" 
                                class="quiz-input" placeholder="Nhập mã tham gia" required>
