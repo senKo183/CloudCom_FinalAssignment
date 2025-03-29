@@ -141,7 +141,7 @@
 
 <script>
 // Tính thời gian còn lại
-let timeLeft = {{ quiz.duration }} * 60; // Chuyển đổi sang giây
+let timeLeft = parseInt('{{ quiz.duration }}') * 60; // Chuyển đổi sang giây
 
 function updateCountdown() {
     const minutes = Math.floor(timeLeft / 60);
