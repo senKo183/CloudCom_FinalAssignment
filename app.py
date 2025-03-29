@@ -1,14 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from flask_migrate import Migrate
 from sqlalchemy.exc import IntegrityError
 import random
 import string
+import re
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -81,6 +82,16 @@ class PasswordResetToken(db.Model):
     
     user = db.relationship('User', backref='reset_tokens', lazy=True)
 
+class StudentAnswer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
+    answer_text = db.Column(db.String(500), nullable=False)
+
+    quiz = db.relationship('Quiz', backref='student_answers', lazy=True)
+    student = db.relationship('User', backref='student_answers', lazy=True)
+    question = db.relationship('Question', backref='student_answers', lazy=True)
 def init_db():
     with app.app_context():
         # Drop all tables
@@ -544,7 +555,6 @@ def take_quiz(quiz_id):
                 print(f"- {a.answer_text}")
 
     return render_template('take_quiz.html', quiz=quiz, questions=questions)
-
 @app.route('/quiz/submit/<int:quiz_id>', methods=['POST'])
 def submit_quiz(quiz_id):
     if 'user_id' not in session or session['role'] != 'student':
@@ -566,19 +576,33 @@ def submit_quiz(quiz_id):
     
     for question in quiz.questions:
         answer = request.form.get(f'answer_{question.id}')
-        answers[question.id] = answer
+        #answers[question.id] = answer
+        print(f"Câu hỏi {question.id} - Câu trả lời nhận được: {answer}")  # Debug
+        if answer is None:
+            print(f"LỖI: Câu trả lời cho câu hỏi {question.id} không nhận được từ form!")
+        # Lưu câu trả lời vào database
+        student_answer = StudentAnswer(
+            quiz_id=quiz_id,
+            student_id=session['user_id'],
+            question_id=question.id,
+            answer_text=answer or ""
+        )
+        db.session.add(student_answer)
         
         # Kiểm tra đáp án
         if question.question_type == 'multiple_choice':
-            selected_answer = Answer.query.get(int(answer)) if answer else None
-            if selected_answer and selected_answer.answer_text == question.correct_answer:
+            #selected_answer = Answer.query.get(int(answer)) if answer else None
+            selected_answer = db.session.get(Answer, int(answer)) if answer else None
+
+            if selected_answer and selected_answer.answer_text.strip() == question.correct_answer.strip():
                 score += 1
         else:  # fill_in_blank
             if answer and answer.strip().lower() == question.correct_answer.strip().lower():
                 score += 1
     
     # Tính điểm theo thang 10
-    final_score = (score / total_questions) * 10
+    final_score = (score / total_questions) * 10 if total_questions > 0 else 0
+
     
     # Lưu kết quả vào database
     quiz_result = QuizResult(
@@ -588,9 +612,67 @@ def submit_quiz(quiz_id):
     )
     db.session.add(quiz_result)
     db.session.commit()
+    #saved_result = QuizResult.query.filter_by(quiz_id=quiz_id, student_id=session['user_id']).first()
+    #print(f"Điểm lưu vào DB: {saved_result.score if saved_result else 'Không tìm thấy'}")
+
     
-    flash(f'Nộp bài thành công! Điểm của bạn: {final_score:.2f}/10')
-    return redirect(url_for('home'))
+
+    return redirect(url_for('results_page', quiz_id=quiz_id))
+    
+   
+@app.route('/results/<int:quiz_id>')
+def results_page(quiz_id):
+    if 'user_id' not in session:
+        flash('Bạn cần đăng nhập để xem kết quả!')
+        return redirect(url_for('login'))
+
+
+    quiz = Quiz.query.get_or_404(quiz_id)
+
+    # Lấy kết quả của user
+    result = QuizResult.query.filter_by(
+        quiz_id=quiz_id, 
+        student_id=session['user_id']
+    ).order_by(QuizResult.id.desc()).first()
+    
+    
+    if not result:
+        flash('Không tìm thấy kết quả bài kiểm tra của bạn.')
+        return redirect(url_for('home'))
+
+    # Lấy danh sách câu hỏi
+    questions = Question.query.filter_by(quiz_id=quiz_id).all()
+
+    # Lấy câu trả lời của học sinh
+   
+    student_answers = db.session.query(StudentAnswer.question_id, Answer.answer_text).join(
+        Answer, StudentAnswer.answer_text == Answer.id
+    ).filter(
+        StudentAnswer.quiz_id == quiz_id, 
+        StudentAnswer.student_id == session["user_id"]
+    ).all()
+    
+    # Chuyển đổi dữ liệu thành dictionary {question_id: answer_text}
+    student_answers_dict = {answer.question_id: answer.answer_text for answer in student_answers}
+
+    # Chuẩn bị dữ liệu cho template    
+    results = []
+    for question in questions:
+        user_answer = student_answers_dict.get(question.id, "Chưa trả lời")  # Nếu không có thì để "Chưa trả lời"
+        is_correct = user_answer.strip().lower() == question.correct_answer.strip().lower() if user_answer != "Chưa trả lời" else False
+        results.append((question.question_text, user_answer, question.correct_answer, is_correct))
+
+    
+
+    return render_template(
+        'results_after.html', 
+        quiz=quiz, 
+        score=result.score, 
+        total_questions=len(questions),
+        results=results
+    )
+
+
 
 @app.route('/quiz/<int:quiz_id>/results')
 def quiz_results(quiz_id):

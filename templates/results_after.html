@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Kết Quả Bài Kiểm Tra{% endblock %}
+
+{% block content %}
+<div class="container results-container">
+    <div class="results-card">
+        <h1>Kết Quả Bài Kiểm Tra</h1>
+        
+        <div class="result-details">
+            <div class="result-item">
+                <strong>Tên bài kiểm tra:</strong> 
+                <span>{{ quiz.title }}</span>
+            </div>
+            
+            <div class="result-item">
+                <strong>Điểm số:</strong> 
+                <span class="score">
+                    {{ score|round(2) }}/10 
+                    ({{ (score/10 * 100)|round(2) }}%)
+                </span>
+               
+
+            </div>
+             
+            <div class="result-status">
+                {% if score >= 5 %}
+                    <div class="alert alert-success">Đạt</div>
+                {% else %}
+                    <div class="alert alert-danger">Không Đạt</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="question-results">
+            <h2>Chi Tiết Câu Trả Lời</h2>
+            <ul class="question-list">
+                {% for question, user_answer, correct_answer, is_correct in results %}
+                <li class="question-item">
+                    <div class="question-text"><strong>{{ question }}</strong></div>
+                    <div class="user-answer">Câu trả lời của bạn: <strong>{{ user_answer }}</strong></div>
+                    {% if is_correct %}
+                        <div class="correct">✅ Đúng</div>
+                    {% else %}
+                        <div class="incorrect">❌ Sai - Đáp án đúng: <strong>{{ correct_answer }}</strong></div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="actions">
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Về Trang Chủ</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.results-container {
+    max-width: 800px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.results-card {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 30px;
+}
+
+.result-details {
+    margin: 20px 0;
+}
+
+.result-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.score {
+    font-size: 1.2em;
+    color: #28a745;
+    font-weight: bold;
+}
+
+.result-status .alert {
+    margin: 20px 0;
+    padding: 10px;
+    font-weight: bold;
+}
+
+.question-results {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.question-list {
+    list-style: none;
+    padding: 0;
+}
+
+.question-item {
+    background: #f1f1f1;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: left;
+}
+
+.correct {
+    color: green;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.incorrect {
+    color: red;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
