@@ -24,10 +24,10 @@
             </div>
              
             <div class="result-status">
-                {% if score >= 5 %}
-                    <div class="alert alert-success">Đạt</div>
+                {% if score >= 3 %}
+                    <div class="alert alert-success">Kết quả: Đạt</div>
                 {% else %}
-                    <div class="alert alert-danger">Không Đạt</div>
+                    <div class="alert alert-danger">Kết quả: Không Đạt</div>
                 {% endif %}
             </div>
         </div>
@@ -35,10 +35,17 @@
         <div class="question-results">
             <h2>Chi Tiết Câu Trả Lời</h2>
             <ul class="question-list">
-                {% for question, user_answer, correct_answer, is_correct in results %}
+                {% for question, user_answer, correct_answer, is_correct, question_type in results %}
                 <li class="question-item">
                     <div class="question-text"><strong>{{ question }}</strong></div>
-                    <div class="user-answer">Câu trả lời của bạn: <strong>{{ user_answer }}</strong></div>
+                    <div class="user-answer">
+                        Câu trả lời của bạn: 
+                        {% if question_type == 'multiple_choice' %}
+                            <strong>{{ user_answer }}</strong>
+                        {% else %}
+                            <strong>{{ user_answer }}</strong>
+                        {% endif %}
+                    </div>
                     {% if is_correct %}
                         <div class="correct">✅ Đúng</div>
                     {% else %}
