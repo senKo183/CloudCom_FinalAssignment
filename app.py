@@ -626,7 +626,6 @@ def results_page(quiz_id):
         flash('Bạn cần đăng nhập để xem kết quả!')
         return redirect(url_for('login'))
 
-
     quiz = Quiz.query.get_or_404(quiz_id)
 
     # Lấy kết quả của user
@@ -634,7 +633,6 @@ def results_page(quiz_id):
         quiz_id=quiz_id, 
         student_id=session['user_id']
     ).order_by(QuizResult.id.desc()).first()
-    
     
     if not result:
         flash('Không tìm thấy kết quả bài kiểm tra của bạn.')
@@ -644,25 +642,36 @@ def results_page(quiz_id):
     questions = Question.query.filter_by(quiz_id=quiz_id).all()
 
     # Lấy câu trả lời của học sinh
-   
-    student_answers = db.session.query(StudentAnswer.question_id, Answer.answer_text).join(
-        Answer, StudentAnswer.answer_text == Answer.id
-    ).filter(
-        StudentAnswer.quiz_id == quiz_id, 
-        StudentAnswer.student_id == session["user_id"]
+    student_answers = StudentAnswer.query.filter_by(
+        quiz_id=quiz_id, 
+        student_id=session["user_id"]
     ).all()
     
     # Chuyển đổi dữ liệu thành dictionary {question_id: answer_text}
-    student_answers_dict = {answer.question_id: answer.answer_text for answer in student_answers}
+    student_answers_dict = {}
+    for answer in student_answers:
+        question = Question.query.get(answer.question_id)
+        if question:  # Kiểm tra xem câu hỏi có tồn tại không
+            if question.question_type == 'multiple_choice':
+                # Lấy text của câu trả lời từ bảng Answer
+                selected_answer = Answer.query.get(int(answer.answer_text))
+                student_answers_dict[answer.question_id] = selected_answer.answer_text if selected_answer else "Chưa trả lời"
+            else:
+                # Với câu điền vào chỗ trống, lấy trực tiếp answer_text
+                student_answers_dict[answer.question_id] = answer.answer_text
 
     # Chuẩn bị dữ liệu cho template    
     results = []
     for question in questions:
-        user_answer = student_answers_dict.get(question.id, "Chưa trả lời")  # Nếu không có thì để "Chưa trả lời"
-        is_correct = user_answer.strip().lower() == question.correct_answer.strip().lower() if user_answer != "Chưa trả lời" else False
-        results.append((question.question_text, user_answer, question.correct_answer, is_correct))
-
-    
+        user_answer = student_answers_dict.get(question.id, "Chưa trả lời")
+        is_correct = False
+        
+        if question.question_type == 'multiple_choice':
+            is_correct = user_answer.strip() == question.correct_answer.strip() if user_answer != "Chưa trả lời" else False
+        else:  # fill_in_blank
+            is_correct = user_answer.strip().lower() == question.correct_answer.strip().lower() if user_answer != "Chưa trả lời" else False
+            
+        results.append((question.question_text, user_answer, question.correct_answer, is_correct, question.question_type))
 
     return render_template(
         'results_after.html', 
@@ -671,7 +680,6 @@ def results_page(quiz_id):
         total_questions=len(questions),
         results=results
     )
-
 
 
 @app.route('/quiz/<int:quiz_id>/results')
