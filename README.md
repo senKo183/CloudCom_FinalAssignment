@@ -1,5 +1,6 @@
-#Mathquiz
-##Tính Năng Chính
+# Mathquiz
+
+## Tính Năng Chính
 - Quản lý tài khoản: Giáo viên có thể đăng ký, đăng nhập để tạo và quản lý bài kiểm tra.
 
 - Tạo bài kiểm tra: Hỗ trợ nhiều loại câu hỏi (trắc nghiệm, điền vào chỗ trống, câu hỏi tự luận).
