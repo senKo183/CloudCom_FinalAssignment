@@ -454,13 +454,21 @@ def search_quiz():
     if not keyword:
         return redirect(url_for('home'))
     
-    # Tìm kiếm tất cả bài kiểm tra
+    # Tìm kiếm tất cả bài kiểm tra và load thông tin profile của giáo viên
     quizzes = Quiz.query.join(User, Quiz.teacher_id == User.id)\
+                       .outerjoin(UserProfile, User.id == UserProfile.user_id)\
+                       .add_columns(User.username, UserProfile.full_name)\
                        .filter(Quiz.title.ilike(f'%{keyword}%'))\
                        .all()
     
+    # Chuyển đổi kết quả thành danh sách quiz với thông tin giáo viên
+    quiz_list = []
+    for quiz, username, full_name in quizzes:
+        quiz.teacher_name = full_name if full_name else username
+        quiz_list.append(quiz)
+    
     return render_template('search_results.html', 
-                         quizzes=quizzes, 
+                         quizzes=quiz_list, 
                          keyword=keyword)
 
 @app.route('/join_quiz', methods=['GET', 'POST'])
