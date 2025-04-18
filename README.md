@@ -10,13 +10,7 @@
 - Làm bài và chấm điểm: Học sinh có thể làm bài trực tuyến, hệ thống tự động chấm điểm các câu hỏi trắc nghiệm.
 
 - Báo cáo kết quả: Hiển thị điểm số và thống kê kết quả sau khi hoàn thành bài kiểm tra.
-
-# ***Thông tin nhóm***
-## **Danh sách thành viên**
-Thành viên 1: Nguyễn Quang Mạnh - 22645001   
-Thành viên 2: Nguyễn Thanh Tường Vy - 22708841  
-Thành viên 3: Lê Hà Tú My - 22648801  
-Thành viên 4: Phạm Thị Ngọc Hương - 20065491  
+    
 ## **Yêu cầu:**   
 - Phiên bản `python` dưới **3.13** (khuyến khích sử dụng phiên bản 3.10, 3.11, 3.12)
 ## **Hướng dẫn cài đặt:**  
