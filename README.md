@@ -5,7 +5,7 @@
 
 - Tạo bài kiểm tra: Hỗ trợ nhiều loại câu hỏi (trắc nghiệm, điền vào chỗ trống, câu hỏi tự luận).
 
-- Hỗ trợ công thức toán học: Cho phép nhập công thức toán học bằng LaTeX.(đang phát triển)
+- Hỗ trợ công thức toán học: Cho phép nhập công thức toán học bằng LaTeX.
 
 - Làm bài và chấm điểm: Học sinh có thể làm bài trực tuyến, hệ thống tự động chấm điểm các câu hỏi trắc nghiệm.
 
