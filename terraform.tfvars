@@ -1,0 +1,5 @@
+region           = "asia-southeast1"
+mongodb_username = "hung"
+mongodb_password = "<your-mongodb-password>"
+mongodb_cluster  = "cluster0.vn2lqaa.mongodb.net"
+mongodb_database = "quizapp" 
