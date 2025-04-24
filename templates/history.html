@@ -155,18 +155,14 @@
                                 <td>
                                     <div class="student-count">
                                         <i class="fas fa-users"></i>
-                                        <span>{{ quiz.results|length }}</span>
+                                        <span>{{ quiz.results|default([])|length }}</span>
                                     </div>
                                 </td>
                                 <td class="actions-cell">
                                     <div class="action-buttons">
-                                        <a href="{{ url_for('view_quiz', quiz_id=quiz.id) }}" class="btn btn-view" title="Xem chi tiết">
+                                        <a href="{{ url_for('view_quiz', quiz_id=quiz._id) }}" class="btn btn-view" title="Xem chi tiết">
                                             <i class="fas fa-eye"></i>
                                             Xem chi tiết
-                                        </a>
-                                        <a href="{{ url_for('quiz_students', quiz_id=quiz.id) }}" class="btn btn-students" title="Danh sách học sinh">
-                                            <i class="fas fa-users"></i>
-                                            Danh sách học sinh
                                         </a>
                                     </div>
                                 </td>
@@ -421,11 +417,6 @@
     color: #1e40af;
 }
 
-.btn-students {
-    background: #dcfce7;
-    color: #166534;
-}
-
 .btn-create {
     background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
     color: white;
@@ -480,10 +471,10 @@
             {% if session.role == 'student' and results %}
                 {% for result in results %}
                     {
-                        title: "{{ result.quiz.title }}",
+                        title: "{{ result.quiz.title|replace('"', '\\"') }}",
                         score: {{ result.score }},
-                        submitted_at: "{{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}"
-                    }{% if not loop.last %},{% endif %}
+                        submitted_at: "{{ result.submitted_at.strftime('%d/%m/%Y %H:%M')|replace('"', '\\"') }}"
+                    }{{ "," if not loop.last else "" }}
                 {% endfor %}
             {% endif %}
         ]
