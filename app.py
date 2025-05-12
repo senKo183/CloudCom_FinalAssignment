@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from bson import ObjectId
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 import string
 import re
@@ -13,9 +13,10 @@ import certifi
 from functools import wraps
 from dotenv import load_dotenv
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 import certifi
-
+import sys
+from time_utils import convert_utc_to_local, convert_local_to_utc
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ MONGODB_URI = f"mongodb+srv://{MONGODB_USERNAME}:{MONGODB_PASSWORD}@{MONGODB_CLU
 
 # MongoDB setup with SSL
 client: Optional[MongoClient] = None
-db: Optional[Database] = None
+db: Optional[Database] = None                                                   
 
 def connect_db() -> None:
     global client, db
@@ -85,6 +86,7 @@ def init_db() -> None:
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred)
 firestore_client = firestore.client()
+auth = firebase_admin.auth
 
 # Configure session cookie settings
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -367,8 +369,21 @@ def create_quiz():
     if request.method == 'POST':
         try:
             title = request.form['title']
-            start_time = datetime.strptime(request.form['start_time'], '%Y-%m-%dT%H:%M')
-            end_time = datetime.strptime(request.form['end_time'], '%Y-%m-%dT%H:%M')
+            
+            # Chuyển đổi thời gian đầu vào sang UTC
+            start_time_local = datetime.strptime(request.form['start_time'], '%Y-%m-%dT%H:%M')
+            end_time_local = datetime.strptime(request.form['end_time'], '%Y-%m-%dT%H:%M')
+            
+            # Chuyển đổi sang UTC để lưu vào database
+            start_time = convert_local_to_utc(start_time_local)
+            end_time = convert_local_to_utc(end_time_local)
+            
+            # In ra debug để kiểm tra
+            print(f"Create quiz - Local start time: {start_time_local}")
+            print(f"Create quiz - UTC start time: {start_time}")
+            print(f"Create quiz - Local end time: {end_time_local}")
+            print(f"Create quiz - UTC end time: {end_time}")
+            
             duration = request.form['duration']
             max_attempts = request.form.get('max_attempts')
             is_public = request.form.get('is_public') == 'on'
@@ -468,17 +483,45 @@ def history():
         flash('Vui lòng đăng nhập để xem lịch sử!')
         return redirect(url_for('login'))
     
-    if session['role'] == 'student':
-        results = list(db.quiz_results.find({'student_id': ObjectId(session['user_id'])}).sort('_id', -1))
-        return render_template('history.html', results=results, datetime=datetime)
-    else:
-        quizzes = list(db.quizzes.find({'teacher_id': ObjectId(session['user_id'])}).sort('_id', -1))
-        
-        # Thêm thông tin số kết quả cho mỗi bài kiểm tra
-        for quiz in quizzes:
-            quiz['results'] = list(db.quiz_results.find({'quiz_id': ObjectId(quiz['_id'])}))
+    try:
+        if session['role'] == 'student':
+            results = list(db.quiz_results.find({'student_id': ObjectId(session['user_id'])}).sort('_id', -1))
             
-        return render_template('history.html', quizzes=quizzes, datetime=datetime)
+            # Lấy thông tin quiz cho mỗi kết quả
+            for result in results:
+                quiz = db.quizzes.find_one({'_id': result['quiz_id']})
+                if quiz:
+                    result['quiz'] = quiz
+                else:
+                    result['quiz'] = {'title': 'Bài kiểm tra đã bị xóa'}
+                
+                # Chuyển đổi thời gian UTC sang thời gian địa phương
+                if 'submitted_at' in result:
+                    result['local_submitted_at'] = convert_utc_to_local(result['submitted_at'])
+            
+            return render_template('history.html', results=results, datetime=datetime)
+        else:
+            quizzes = list(db.quizzes.find({'teacher_id': ObjectId(session['user_id'])}).sort('_id', -1))
+            
+            # Chuyển đổi thời gian UTC sang thời gian địa phương
+            for quiz in quizzes:
+                quiz['local_start_time'] = convert_utc_to_local(quiz['start_time'])
+                quiz['local_end_time'] = convert_utc_to_local(quiz['end_time'])
+                
+            # Thêm thông tin số kết quả cho mỗi bài kiểm tra
+            for quiz in quizzes:
+                quiz['results'] = list(db.quiz_results.find({'quiz_id': ObjectId(quiz['_id'])}))
+                
+                # Chuyển đổi thời gian cho mỗi kết quả
+                for result in quiz['results']:
+                    if 'submitted_at' in result:
+                        result['local_submitted_at'] = convert_utc_to_local(result['submitted_at'])
+            
+            return render_template('history.html', quizzes=quizzes, datetime=datetime)
+    except Exception as e:
+        app.logger.error(f'Error in history route: {str(e)}')
+        flash('Có lỗi xảy ra khi tải lịch sử. Vui lòng thử lại sau.', 'error')
+        return redirect(url_for('home'))
 
 @app.route('/view-quiz/<quiz_id>')
 def view_quiz(quiz_id):
@@ -515,8 +558,37 @@ def edit_quiz(quiz_id):
     if request.method == 'POST':
         try:
             quiz['title'] = request.form.get('title')
-            quiz['start_time'] = datetime.fromisoformat(request.form.get('start_time').replace('Z', '+00:00'))
-            quiz['end_time'] = datetime.fromisoformat(request.form.get('end_time').replace('Z', '+00:00'))
+            
+            # Đảm bảo lưu trữ thời gian ở dạng UTC
+            start_time_str = request.form.get('start_time')
+            end_time_str = request.form.get('end_time')
+            
+            # Xử lý trường hợp start_time_str
+            if 'T' in start_time_str:
+                # Định dạng ISO từ input datetime-local
+                start_time_local = datetime.strptime(start_time_str, '%Y-%m-%dT%H:%M')
+            else:
+                # Định dạng từ chuỗi đã được format
+                start_time_local = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M:%S')
+                
+            # Xử lý trường hợp end_time_str
+            if 'T' in end_time_str:
+                # Định dạng ISO từ input datetime-local
+                end_time_local = datetime.strptime(end_time_str, '%Y-%m-%dT%H:%M')
+            else:
+                # Định dạng từ chuỗi đã được format
+                end_time_local = datetime.strptime(end_time_str, '%Y-%m-%d %H:%M:%S')
+            
+            # Chuyển đổi sang UTC để lưu vào database
+            quiz['start_time'] = convert_local_to_utc(start_time_local)
+            quiz['end_time'] = convert_local_to_utc(end_time_local)
+            
+            # In thông tin debug
+            print(f"Edit quiz - Local start time: {start_time_local}")
+            print(f"Edit quiz - UTC start time: {quiz['start_time']}")
+            print(f"Edit quiz - Local end time: {end_time_local}")
+            print(f"Edit quiz - UTC end time: {quiz['end_time']}")
+            
             quiz['duration'] = int(request.form.get('duration'))
             max_attempts = request.form.get('max_attempts')
             quiz['max_attempts'] = int(max_attempts) if max_attempts else None
@@ -601,15 +673,41 @@ def delete_quiz(quiz_id):
 
 @app.route('/search')
 def search_quiz():
-    keyword = request.args.get('keyword', '')
-    if not keyword:
+    try:
+        keyword = request.args.get('keyword', '')
+        if not keyword:
+            return redirect(url_for('home'))
+        
+        # Tìm tất cả các bài kiểm tra có tiêu đề khớp với từ khóa (chỉ lấy bài công khai nếu là học sinh)
+        query = {'title': {'$regex': keyword, '$options': 'i'}}
+        
+        # Nếu người dùng là học sinh, chỉ hiển thị bài kiểm tra công khai
+        if 'role' in session and session['role'] == 'student':
+            query['is_public'] = True
+        
+        quizzes = list(db.quizzes.find(query))
+        
+        # Thêm thông tin giáo viên cho mỗi bài kiểm tra
+        for quiz in quizzes:
+            teacher = db.users.find_one({'_id': quiz['teacher_id']})
+            if teacher:
+                quiz['teacher'] = {
+                    'username': teacher['username'],
+                    'id': str(teacher['_id'])
+                }
+            else:
+                quiz['teacher'] = {'username': 'Unknown', 'id': ''}
+            
+            # Chuyển ObjectId thành chuỗi để có thể serialized thành JSON
+            quiz['id'] = str(quiz['_id'])
+        
+        return render_template('search_results.html', 
+                             quizzes=quizzes, 
+                             keyword=keyword)
+    except Exception as e:
+        app.logger.error(f'Lỗi tìm kiếm: {str(e)}')
+        flash(f'Có lỗi xảy ra khi tìm kiếm: {str(e)}', 'error')
         return redirect(url_for('home'))
-    
-    quizzes = list(db.quizzes.find({'title': {'$regex': keyword, '$options': 'i'}}))
-    
-    return render_template('search_results.html', 
-                         quizzes=quizzes, 
-                         keyword=keyword)
 
 @app.route('/join_quiz', methods=['GET', 'POST'])
 def join_quiz():
@@ -625,13 +723,30 @@ def join_quiz():
             flash('Mã bài kiểm tra không tồn tại!', 'error')
             return redirect(url_for('join_quiz'))
 
-        current_time = datetime.now()
+        # Lấy thời gian hiện tại theo UTC để so sánh với dữ liệu trong DB
+        current_time = datetime.utcnow()
+        
+        # In ra debug để kiểm tra
+        print(f"Join quiz - Current UTC time: {current_time}")
+        print(f"Join quiz - Quiz UTC start time: {quiz['start_time']}")
+        print(f"Join quiz - Quiz UTC end time: {quiz['end_time']}")
+        
+        # Kiểm tra thời gian bắt đầu
         if current_time < quiz['start_time']:
-            flash('Bài kiểm tra chưa bắt đầu!', 'error')
+            # Chuyển múi giờ về địa phương để hiển thị thông báo
+            local_start_time = convert_utc_to_local(quiz['start_time'])
+            formatted_start = local_start_time.strftime('%d/%m/%Y %H:%M')
+            
+            flash(f'Bài kiểm tra chưa bắt đầu! Bài kiểm tra sẽ bắt đầu vào lúc {formatted_start}', 'error')
             return redirect(url_for('join_quiz'))
         
+        # Kiểm tra thời gian kết thúc
         if current_time > quiz['end_time']:
-            flash('Bài kiểm tra đã kết thúc!', 'error')
+            # Chuyển múi giờ về địa phương để hiển thị thông báo
+            local_end_time = convert_utc_to_local(quiz['end_time'])
+            formatted_end = local_end_time.strftime('%d/%m/%Y %H:%M')
+            
+            flash(f'Bài kiểm tra đã kết thúc vào lúc {formatted_end}!', 'error')
             return redirect(url_for('join_quiz'))
 
         if quiz['max_attempts']:
@@ -647,38 +762,73 @@ def join_quiz():
 
 @app.route('/take_quiz/<quiz_id>')
 def take_quiz(quiz_id):
-    if 'user_id' not in session:
-        flash('Vui lòng đăng nhập để làm bài kiểm tra!', 'error')
-        return redirect(url_for('login'))
+    try:
+        if 'user_id' not in session:
+            flash('Vui lòng đăng nhập để làm bài kiểm tra!', 'error')
+            return redirect(url_for('login'))
 
-    quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
-    
-    if session['role'] == 'student':
-        if not quiz['is_public']:
-            quiz_code = request.args.get('quiz_code')
-            if not quiz_code or quiz_code != quiz['quiz_code']:
-                flash('Bài kiểm tra này ở chế độ riêng tư. Vui lòng sử dụng mã bài kiểm tra để tham gia!', 'error')
-                return redirect(url_for('join_quiz'))
+        quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
 
-    current_time = datetime.now()
-    if current_time < quiz['start_time']:
-        flash('Bài kiểm tra chưa bắt đầu!', 'error')
-        return redirect(url_for('home'))
-    
-    if current_time > quiz['end_time']:
-        flash('Bài kiểm tra đã kết thúc!', 'error')
-        return redirect(url_for('home'))
-
-    if quiz['max_attempts']:
-        attempt_count = db.quiz_results.count_documents({'quiz_id': ObjectId(quiz['_id']), 'student_id': ObjectId(session['user_id'])})
-        
-        if attempt_count >= quiz['max_attempts']:
-            flash(f'Bạn đã vượt quá số lần làm bài cho phép ({quiz["max_attempts"]} lần)!', 'error')
+        if not quiz:
+            flash('Bài kiểm tra không tồn tại!', 'error')
             return redirect(url_for('home'))
 
-    questions = list(db.questions.find({'quiz_id': ObjectId(quiz['_id'])}))
+        # Ensure the user is allowed to take this quiz
+        if session['role'] == 'student':
+            quiz_code_param = request.args.get('quiz_code')  # Lấy từ URL parameter
+            if not quiz['is_public']:
+                if not quiz_code_param or quiz_code_param != quiz['quiz_code']:
+                    flash('Bài kiểm tra này ở chế độ riêng tư. Vui lòng sử dụng mã bài kiểm tra để tham gia!', 'error')
+                    return redirect(url_for('join_quiz'))
+
+        # Check time validation
+        current_time = datetime.utcnow()
+        if current_time < quiz['start_time']:
+            local_start_time = convert_utc_to_local(quiz['start_time'])
+            formatted_start = local_start_time.strftime('%d/%m/%Y %H:%M')
+            flash(f'Bài kiểm tra chưa bắt đầu! Bài kiểm tra sẽ bắt đầu vào lúc {formatted_start}', 'error')
+            return redirect(url_for('home'))
+
+        if current_time > quiz['end_time']:
+            local_end_time = convert_utc_to_local(quiz['end_time'])
+            formatted_end = local_end_time.strftime('%d/%m/%Y %H:%M')
+            flash(f'Bài kiểm tra đã kết thúc vào lúc {formatted_end}!', 'error')
+            return redirect(url_for('home'))
+
+        if quiz.get('max_attempts'):
+            attempt_count = db.quiz_results.count_documents({'quiz_id': ObjectId(quiz['_id']), 'student_id': ObjectId(session['user_id'])})
+            if attempt_count >= quiz['max_attempts']:
+                flash(f'Bạn đã vượt quá số lần làm bài cho phép ({quiz["max_attempts"]} lần)!', 'error')
+                return redirect(url_for('home'))
+
+        questions = list(db.questions.find({'quiz_id': ObjectId(quiz['_id'])}))
+        if not questions:
+            flash('Bài kiểm tra này chưa có câu hỏi!', 'error')
+            return redirect(url_for('home'))
+            
+        # Lấy đáp án cho các câu hỏi trắc nghiệm
+        for question in questions:
+            question['answers'] = list(db.answers.find({'question_id': question['_id']}))
+            
+        # Create a new attempt for this quiz
+        attempt = db.quiz_attempts.insert_one({
+            'quiz_id': ObjectId(quiz['_id']),
+            'student_id': ObjectId(session['user_id']),
+            'start_time': current_time,
+            'submitted': False,
+            'answers': [],
+            'score': 0
+        })
+        
+        # Get the created attempt
+        attempt_doc = db.quiz_attempts.find_one({'_id': attempt.inserted_id})
+
+        return render_template('take_quiz.html', quiz=quiz, questions=questions, attempt=attempt_doc)
     
-    return render_template('take_quiz.html', quiz=quiz, questions=questions)
+    except Exception as e:
+        app.logger.error(f'Error in take_quiz route: {str(e)}')
+        flash('Đã xảy ra lỗi khi tải bài kiểm tra.', 'error')
+        return redirect(url_for('home'))  # Redirect về trang chủ thay vì hiển thị 500
 
 @app.route('/submit_quiz/<quiz_id>/<attempt_id>', methods=['POST'])
 @login_required
@@ -687,63 +837,98 @@ def submit_quiz(quiz_id, attempt_id):
         quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         attempt = db.quiz_attempts.find_one({
             '_id': ObjectId(attempt_id),
-            'student_id': session['user_id']
+            'student_id': ObjectId(session['user_id'])
         })
         
         if not quiz or not attempt:
-            flash('Quiz or attempt not found', 'error')
-            return redirect(url_for('student_dashboard'))
+            flash('Bài kiểm tra hoặc lần làm bài không tồn tại', 'error')
+            return redirect(url_for('home'))
             
         if attempt['submitted']:
-            flash('Quiz has already been submitted', 'error')
-            return redirect(url_for('quiz_results', quiz_id=quiz_id, attempt_id=attempt_id))
+            flash('Bài kiểm tra đã được nộp rồi', 'error')
+            return redirect(url_for('quiz_results', quiz_id=quiz_id))
             
-        current_time = datetime.now()
+        # Sử dụng UTC để so sánh thời gian
+        current_time = datetime.utcnow()
+        print(f"Submit quiz - Current time: {current_time}")
+        print(f"Submit quiz - Quiz end time: {quiz['end_time']}")
+        
         if current_time > quiz['end_time']:
-            flash('Quiz has ended', 'error')
-            return redirect(url_for('student_dashboard'))
+            # Chuyển múi giờ về địa phương để hiển thị thông báo
+            local_end_time = convert_utc_to_local(quiz['end_time'])
+            formatted_end = local_end_time.strftime('%d/%m/%Y %H:%M')
+            
+            flash(f'Bài kiểm tra đã kết thúc vào lúc {formatted_end}!', 'error')
+            return redirect(url_for('home'))
 
-        # Process answers
+        # Lấy tất cả câu hỏi từ bài kiểm tra
+        questions = list(db.questions.find({'quiz_id': ObjectId(quiz_id)}))
+        
+        # Xử lý câu trả lời
         answers = []
         score = 0
-        for question in quiz['questions']:
-            answer = request.form.get(f'answer_{question["_id"]}')
-            if not answer:
+        total_questions = len(questions)
+        
+        for question in questions:
+            answer_key = f"answer_{question['_id']}"
+            user_answer = request.form.get(answer_key)
+            
+            if not user_answer:
                 continue
                 
-            is_correct = answer == question['correct_answer']
+            # Kiểm tra câu trả lời
+            is_correct = False
+            
+            if question['question_type'] == 'multiple_choice':
+                # Với câu hỏi trắc nghiệm, cần so sánh với đáp án đúng
+                correct_answer_id = question['correct_answer']  # Correct answer is stored as ObjectId
+                is_correct = (user_answer == str(correct_answer_id))  # Compare with the submitted answer ID
+            else:
+                # Với câu hỏi điền, so sánh trực tiếp
+                is_correct = (user_answer.lower().strip() == question['correct_answer'].lower().strip())
+            
+            # Lưu câu trả lời
             answers.append({
                 'question_id': question['_id'],
-                'answer': answer,
+                'user_answer': user_answer,
                 'is_correct': is_correct
             })
+            
             if is_correct:
                 score += 1
 
-        # Update attempt with answers and score
-        result = db.quiz_attempts.update_one(
+        # Tính điểm
+        final_score = (score / total_questions) * 10 if total_questions > 0 else 0
+        
+        # Cập nhật attempt
+        db.quiz_attempts.update_one(
             {'_id': ObjectId(attempt_id)},
             {
                 '$set': {
                     'answers': answers,
-                    'score': score,
+                    'score': final_score,
                     'submitted': True,
                     'submit_time': current_time
                 }
             }
         )
         
-        if result.modified_count == 0:
-            flash('Failed to submit quiz', 'error')
-            return redirect(url_for('take_quiz', quiz_id=quiz_id, attempt_id=attempt_id))
+        # Tạo kết quả bài kiểm tra
+        db.quiz_results.insert_one({
+            'quiz_id': ObjectId(quiz_id),
+            'student_id': ObjectId(session['user_id']),
+            'attempt_id': ObjectId(attempt_id),
+            'score': final_score,
+            'submitted_at': current_time
+        })
             
-        flash('Quiz submitted successfully!', 'success')
-        return redirect(url_for('quiz_results', quiz_id=quiz_id, attempt_id=attempt_id))
+        flash('Nộp bài kiểm tra thành công!', 'success')
+        return redirect(url_for('quiz_results', quiz_id=quiz_id))
         
     except Exception as e:
         app.logger.error(f'Error submitting quiz: {str(e)}')
-        flash('An error occurred while submitting the quiz', 'error')
-        return redirect(url_for('student_dashboard'))
+        flash(f'Có lỗi xảy ra khi nộp bài: {str(e)}', 'error')
+        return redirect(url_for('home'))
 
 @app.route('/quiz_results/<quiz_id>')
 @login_required
@@ -752,7 +937,11 @@ def quiz_results(quiz_id):
         quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             flash('Bài kiểm tra không tồn tại', 'error')
-            return redirect(url_for('manage_quizzes'))
+            return redirect(url_for('manage_quizzes') if session.get('role') == 'teacher' else url_for('home'))
+
+        # Chuyển đổi thời gian UTC sang thời gian địa phương
+        quiz['local_start_time'] = convert_utc_to_local(quiz['start_time'])
+        quiz['local_end_time'] = convert_utc_to_local(quiz['end_time'])
 
         # Check if user is teacher and owns the quiz
         if session['role'] == 'teacher':
@@ -760,36 +949,67 @@ def quiz_results(quiz_id):
                 flash('Bạn không có quyền xem kết quả của bài kiểm tra này', 'error')
                 return redirect(url_for('manage_quizzes'))
             
-            # Get all attempts for this quiz
-            results = list(db.quiz_attempts.find({'quiz_id': ObjectId(quiz_id), 'submitted': True}))
+            # Lấy tất cả các lần làm bài cho bài kiểm tra này
+            results = list(db.quiz_results.find({'quiz_id': ObjectId(quiz_id)}).sort('submitted_at', -1))
             
-            # Get student information for each attempt
+            # Chuyển đổi thời gian cho mỗi kết quả
+            for result in results:
+                if 'submitted_at' in result:
+                    result['local_submit_time'] = convert_utc_to_local(result['submitted_at'])
+            
+            # Lấy thông tin học sinh cho mỗi kết quả
             for result in results:
                 student = db.users.find_one({'_id': ObjectId(result['student_id'])})
                 result['student'] = student
+                
+                # Lấy thông tin chi tiết về câu trả lời
+                if 'attempt_id' in result:
+                    attempt = db.quiz_attempts.find_one({'_id': ObjectId(result['attempt_id'])})
+                    if attempt and 'answers' in attempt:
+                        result['answers'] = attempt['answers']
                 
             return render_template('quiz_results.html', 
                                 quiz=quiz,
                                 results=results)
         else:
-            # For students, show only their attempts
-            attempts = list(db.quiz_attempts.find({
+            # Đối với học sinh, chỉ hiển thị các lần làm bài của họ
+            results = list(db.quiz_results.find({
                 'quiz_id': ObjectId(quiz_id),
-                'student_id': ObjectId(session['user_id']),
-                'submitted': True
-            }))
+                'student_id': ObjectId(session['user_id'])
+            }).sort('submitted_at', -1))
             
-            if not attempts:
+            # Chuyển đổi thời gian cho mỗi kết quả
+            for result in results:
+                if 'submitted_at' in result:
+                    result['local_submit_time'] = convert_utc_to_local(result['submitted_at'])
+            
+            # Lấy chi tiết về các câu trả lời
+            for result in results:
+                if 'attempt_id' in result:
+                    attempt = db.quiz_attempts.find_one({'_id': ObjectId(result['attempt_id'])})
+                    if attempt and 'answers' in attempt:
+                        result['answers'] = attempt['answers']
+            
+            if not results:
                 flash('Bạn chưa làm bài kiểm tra này', 'info')
                 return redirect(url_for('home'))
                 
+            # Lấy danh sách câu hỏi để hiển thị đáp án đúng
+            questions = list(db.questions.find({'quiz_id': ObjectId(quiz_id)}))
+            
+            # Lấy các đáp án cho câu hỏi trắc nghiệm
+            for question in questions:
+                question['answers'] = list(db.answers.find({'question_id': question['_id']}))
+                
             return render_template('student_quiz_results.html',
                                 quiz=quiz,
-                                attempts=attempts)
+                                results=results,
+                                questions=questions)
                             
     except Exception as e:
+        app.logger.error(f'Error in quiz_results route: {str(e)}')
         flash(f'Có lỗi xảy ra: {str(e)}', 'error')
-        return redirect(url_for('manage_quizzes' if session['role'] == 'teacher' else 'home'))
+        return redirect(url_for('manage_quizzes') if session['role'] == 'teacher' else url_for('home'))
 
 @app.route('/profile')
 def profile():
@@ -1046,15 +1266,39 @@ def register_google_callback():
         print(f"Error in register_google_callback: {str(e)}")
         return jsonify({'success': False, 'error': 'Có lỗi xảy ra khi đăng ký'}), 500
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for Cloud Run."""
+    try:
+        # Kiểm tra kết nối đến database
+        if client and db:
+            client.admin.command('ping')
+            return jsonify({"status": "ok"}), 200
+        else:
+            return jsonify({"status": "error", "message": "Database connection failed"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 def main():
     try:
         port = int(os.environ.get('PORT', 8080))
         print(f"Starting server on port {port}")
-        app.run(host='0.0.0.0', port=8080)
+        # Đặt threaded=True để xử lý đồng thời nhiều request
+        # Đặt debug=False cho môi trường production
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
     except Exception as e:
         print(f"Error starting server: {str(e)}")
-        raise
+        sys.exit(1)  # Exit with error code
 
 
 if __name__ == "__main__":
     main()
+
+# Chỉnh sửa template context processor để thêm hàm đổi múi giờ cho tất cả template
+@app.context_processor
+def utility_processor():
+    return {
+        'convert_utc_to_local': convert_utc_to_local,
+        'convert_local_to_utc': convert_local_to_utc,
+        'format_datetime': lambda dt, fmt='%d/%m/%Y %H:%M': convert_utc_to_local(dt).strftime(fmt) if dt else ""
+    }

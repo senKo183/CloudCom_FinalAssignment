@@ -92,7 +92,7 @@
                                 <td>
                                     <div class="date-info">
                                         <i class="far fa-clock"></i>
-                                        {{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+                                        {{ result.local_submitted_at.strftime('%d/%m/%Y %H:%M') if result.local_submitted_at else 'Không có thông tin' }}
                                     </div>
                                 </td>
                             </tr>
@@ -102,12 +102,8 @@
                 </div>
             </div>
         {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-book-reader fa-4x"></i>
-                </div>
-                <h2>Chưa có bài kiểm tra nào</h2>
-                <p>Bạn chưa tham gia bài kiểm tra nào. Hãy tham gia các bài kiểm tra để xem kết quả tại đây.</p>
+            <div class="alert alert-info">
+                Bạn chưa làm bài kiểm tra nào.
             </div>
         {% endif %}
     {% else %}
@@ -138,12 +134,12 @@
                                 </td>
                                 <td>
                                     <div class="time-info">
-                                        <div><i class="fas fa-play"></i> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</div>
-                                        <div><i class="fas fa-stop"></i> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</div>
+                                        <div><i class="fas fa-play"></i> {{ quiz.local_start_time.strftime('%d/%m/%Y %H:%M') }}</div>
+                                        <div><i class="fas fa-stop"></i> {{ quiz.local_end_time.strftime('%d/%m/%Y %H:%M') }}</div>
                                     </div>
                                 </td>
                                 <td>
-                                    {% set now = datetime.now() %}
+                                    {% set now = datetime.utcnow() %}
                                     {% if now < quiz.start_time %}
                                         <span class="status-badge upcoming">Sắp diễn ra</span>
                                     {% elif now > quiz.end_time %}
@@ -473,7 +469,7 @@
                     {
                         title: "{{ result.quiz.title|replace('"', '\\"') }}",
                         score: {{ result.score }},
-                        submitted_at: "{{ result.submitted_at.strftime('%d/%m/%Y %H:%M')|replace('"', '\\"') }}"
+                        submitted_at: "{{ result.local_submitted_at.strftime('%d/%m/%Y %H:%M')|replace('"', '\\"') if result.local_submitted_at else '' }}"
                     }{{ "," if not loop.last else "" }}
                 {% endfor %}
             {% endif %}
@@ -481,39 +477,41 @@
     };
 
     // Khởi tạo biểu đồ điểm số
-    const scoreCtx = document.getElementById('scoreChart').getContext('2d');
-    new Chart(scoreCtx, {
-        type: 'line',
-        data: {
-            labels: quizData.results.map(result => result.title),
-            datasets: [{
-                label: 'Điểm số',
-                data: quizData.results.map(result => result.score),
-                borderColor: '#4b6cb7',
-                backgroundColor: 'rgba(75, 108, 183, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Biểu đồ điểm số theo thời gian',
-                    font: { size: 16 }
-                }
+    const scoreCtx = document.getElementById('scoreChart');
+    if (scoreCtx) {
+        new Chart(scoreCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: quizData.results.map(result => result.title),
+                datasets: [{
+                    label: 'Điểm số',
+                    data: quizData.results.map(result => result.score),
+                    borderColor: '#4b6cb7',
+                    backgroundColor: 'rgba(75, 108, 183, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 10
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Biểu đồ điểm số theo thời gian',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 
     // Khởi tạo biểu đồ phân phối điểm
     const averageCtx = document.getElementById('averageChart').getContext('2d');

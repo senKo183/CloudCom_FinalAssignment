@@ -40,4 +40,13 @@ resource "google_cloud_run_service" "quiz-app" {
     percent         = 100
     latest_revision = true
   }
+}
+
+# Cho phép truy cập công khai vào Cloud Run service
+resource "google_cloud_run_service_iam_member" "public_access" {
+  service  = google_cloud_run_service.quiz-app.name
+  location = google_cloud_run_service.quiz-app.location
+  project  = google_cloud_run_service.quiz-app.project
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 } 
