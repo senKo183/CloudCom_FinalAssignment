@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Kết quả bài kiểm tra{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="results-header">
+        <h1>Kết quả bài kiểm tra: {{ quiz.title }}</h1>
+        <div class="quiz-info">
+            <p><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
+            <p><strong>Thời gian bắt đầu:</strong> {{ quiz.local_start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p><strong>Thời gian kết thúc:</strong> {{ quiz.local_end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+    </div>
+
+    {% if results %}
+        <div class="results-list">
+            <h2>Kết quả các lần làm bài</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Lần thứ</th>
+                            <th>Điểm số</th>
+                            <th>Thời gian nộp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr class="{% if loop.index == 1 %}latest-attempt{% endif %}">
+                            <td>{{ loop.index }}</td>
+                            <td>{{ "%.2f"|format(result.score) }}/10</td>
+                            <td>{{ result.local_submit_time.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Hiển thị chi tiết kết quả lần làm mới nhất -->
+        {% set latest_result = results[0] %}
+        {% if latest_result and latest_result.answers %}
+            <div class="detailed-results">
+                <h2>Chi tiết câu trả lời (lần làm gần nhất)</h2>
+                
+                <div class="questions-results">
+                    {% for question in questions %}
+                        <div class="question-card">
+                            <h3>Câu hỏi {{ loop.index }}</h3>
+                            <p class="question-text">{{ question.question_text }}</p>
+                            
+                            <!-- Tìm câu trả lời của học sinh cho câu hỏi này -->
+                            {% set user_answer = None %}
+                            {% set is_correct = False %}
+                            {% for answer in latest_result.answers %}
+                                {% if answer.question_id|string == question._id|string %}
+                                    {% set user_answer = answer.user_answer %}
+                                    {% set is_correct = answer.is_correct %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <!-- Hiển thị đáp án -->
+                            {% if question.question_type == 'multiple_choice' %}
+                                <div class="options">
+                                    {% for answer in question.answers %}
+                                        {% set is_selected = (user_answer == answer.answer_text) %}
+                                        {% set is_correct_answer = (answer._id|string == question.correct_answer) %}
+                                        
+                                        <div class="option {% if is_selected and is_correct_answer %}correct{% elif is_selected and not is_correct_answer %}incorrect{% elif is_correct_answer %}correct-answer{% endif %}">
+                                            <input type="radio" disabled {% if is_selected %}checked{% endif %}>
+                                            <label>
+                                                {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
+                                                <span class="option-letter">{{ option_letter }}.</span>
+                                                {{ answer.answer_text }}
+                                                
+                                                {% if is_selected and is_correct_answer %}
+                                                    <span class="badge badge-success">Đúng</span>
+                                                {% elif is_selected and not is_correct_answer %}
+                                                    <span class="badge badge-danger">Sai</span>
+                                                {% elif is_correct_answer %}
+                                                    <span class="badge badge-info">Đáp án đúng</span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="fill-in-blank">
+                                    <p><strong>Câu trả lời của bạn:</strong> <span class="{% if is_correct %}text-success{% else %}text-danger{% endif %}">{{ user_answer }}</span></p>
+                                    {% if not is_correct %}
+                                        <p><strong>Đáp án đúng:</strong> <span class="text-success">{{ question.correct_answer }}</span></p>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            Bạn chưa làm bài kiểm tra này.
+        </div>
+    {% endif %}
+    
+    <div class="action-buttons">
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Quay lại trang chủ</a>
+    </div>
+</div>
+
+<style>
+.results-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.quiz-info {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.results-list {
+    margin-bottom: 40px;
+}
+
+.latest-attempt {
+    font-weight: bold;
+    background-color: #e9ecef !important;
+}
+
+.question-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.question-text {
+    font-size: 1.1em;
+    margin-bottom: 15px;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.option.correct {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.option.incorrect {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.option.correct-answer {
+    background-color: rgba(23, 162, 184, 0.1);
+}
+
+.option input[type="radio"] {
+    margin-top: 3px;
+}
+
+.option label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.option-letter {
+    font-weight: bold;
+    margin-right: 8px;
+    min-width: 20px;
+    display: inline-block;
+}
+
+.badge {
+    margin-left: 10px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.7em;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.action-buttons {
+    margin-top: 30px;
+    text-align: center;
+}
+</style>
+{% endblock %} 

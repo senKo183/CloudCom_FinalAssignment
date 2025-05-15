@@ -12,7 +12,7 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ url_for('submit_quiz', quiz_id=quiz.id) }}" id="quiz-form">
+    <form method="POST" action="{{ url_for('submit_quiz', quiz_id=quiz._id, attempt_id=attempt._id) }}" id="quiz-form">
         {% for question in questions %}
         <div class="question-card">
             <h3>Câu hỏi {{ loop.index }}</h3>
@@ -23,11 +23,11 @@
                     {% for answer in question.answers %}
                     <div class="option">
                         <input type="radio" 
-                               name="answer_{{ question.id }}" 
-                               id="option_{{ question.id }}_{{ loop.index }}"
-                               value="{{ answer.id }}"
+                               name="answer_{{ question._id }}" 
+                               id="option_{{ question._id }}_{{ loop.index }}"
+                               value="{{ answer.answer_text }}"
                                required>
-                        <label for="option_{{ question.id }}_{{ loop.index }}">
+                        <label for="option_{{ question._id }}_{{ loop.index }}">
                             {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
                             <span class="option-letter">{{ option_letter }}.</span>
                             {{ answer.answer_text }}
@@ -38,7 +38,7 @@
             {% else %}
                 <div class="fill-in-blank">
                     <input type="text" 
-                           name="answer_{{ question.id }}"
+                           name="answer_{{ question._id }}"
                            class="answer-input"
                            placeholder="Nhập câu trả lời của bạn"
                            required>
