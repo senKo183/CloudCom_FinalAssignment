@@ -12,7 +12,7 @@
         </a>
     </div>
     
-    <form method="POST" class="quiz-form">
+    <form method="POST" class="quiz-form" id="quizForm">
         <div class="form-group">
             <label for="title">Tiêu đề bài kiểm tra:</label>
             <input type="text" id="title" name="title" value="{{ quiz.title }}" required>
@@ -44,10 +44,16 @@
         <div id="questions-container">
             <h2>Danh sách câu hỏi</h2>
             {% for question in quiz.questions %}
-            <div class="question-item">
+            <div class="question-item" data-question-id="{{ question.id }}">
+                <input type="hidden" name="question_ids[]" value="{{ question.id }}">
                 <hr>
+                <div class="question-header">
+                    <h3>Câu hỏi {{ loop.index }}</h3>
+                    <button type="button" class="btn btn-outline-danger delete-question" onclick="confirmDeleteQuestion(this)">
+                        <i class="fas fa-trash"></i> Xóa câu hỏi
+                    </button>
+                </div>
                 <div class="form-group">
-                    <label>Câu hỏi {{ loop.index }}:</label>
                     <textarea name="questions[]" required>{{ question.question_text }}</textarea>
                 </div>
 
@@ -96,12 +102,13 @@
 </div>
 
 <style>
-    .question-card {
+    .question-item {
         background-color: #f9f9f9;
         border-radius: 8px;
         padding: 20px;
         margin-bottom: 20px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        position: relative;
     }
     
     .question-header {
@@ -109,6 +116,18 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 15px;
+        padding: 10px 0;
+    }
+    
+    .delete-question {
+        padding: 8px 15px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    
+    .delete-question:hover {
+        background-color: #dc3545;
+        color: white;
     }
     
     .form-actions {
@@ -124,9 +143,75 @@
     .action-bar {
         margin-bottom: 20px;
     }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 25px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        font-family: inherit;
+        text-align: center;
+    }
+
+    .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .modal-content p {
+        margin-bottom: 20px;
+        font-size: 1rem;
+        line-height: 1.5;
+        text-align: center;
+    }
+
+    .modal-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 0 20px;
+    }
+
+    .modal-buttons button {
+        padding: 8px 20px;
+        border-radius: 4px;
+        font-size: 1rem;
+        min-width: 100px;
+    }
+
+    .modal-buttons .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+    }
+
+    .modal-buttons .btn-danger {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+    }
 </style>
 
 <script>
+let questionsToDelete = new Set();
+
 function toggleAnswerType(select) {
     const questionItem = select.closest('.question-item');
     const multipleChoiceOptions = questionItem.querySelector('.multiple-choice-options');
@@ -150,10 +235,16 @@ function addQuestion() {
     
     const newQuestion = document.createElement('div');
     newQuestion.className = 'question-item';
+    newQuestion.setAttribute('data-question-id', 'new');
     newQuestion.innerHTML = `
         <hr>
+        <div class="question-header">
+            <h3>Câu hỏi ${questionCount}</h3>
+            <button type="button" class="btn btn-outline-danger delete-question" onclick="confirmDeleteQuestion(this)">
+                <i class="fas fa-trash"></i> Xóa câu hỏi
+            </button>
+        </div>
         <div class="form-group">
-            <label>Câu hỏi ${questionCount}:</label>
             <textarea name="questions[]" required></textarea>
         </div>
 
@@ -168,10 +259,10 @@ function addQuestion() {
         <div class="multiple-choice-options">
             <div class="form-group">
                 <label>Các lựa chọn:</label>
-                <input type="text" name="option1[]" placeholder="Lựa chọn A" required>
-                <input type="text" name="option2[]" placeholder="Lựa chọn B" required>
-                <input type="text" name="option3[]" placeholder="Lựa chọn C" required>
-                <input type="text" name="option4[]" placeholder="Lựa chọn D" required>
+                <input type="text" name="option1[]" placeholder="Lựa chọn 1" required>
+                <input type="text" name="option2[]" placeholder="Lựa chọn 2" required>
+                <input type="text" name="option3[]" placeholder="Lựa chọn 3" required>
+                <input type="text" name="option4[]" placeholder="Lựa chọn 4" required>
             </div>
         </div>
 
@@ -183,5 +274,59 @@ function addQuestion() {
     
     container.appendChild(newQuestion);
 }
+
+function confirmDeleteQuestion(button) {
+    const questionItem = button.closest('.question-item');
+    const questionId = questionItem.dataset.questionId;
+    const questionCount = document.querySelectorAll('.question-item').length;
+
+    if (questionCount <= 1) {
+        alert('Bài kiểm tra phải có ít nhất 1 câu hỏi!');
+        return;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>Xác nhận xóa câu hỏi</h3>
+            <p>Bạn có chắc chắn muốn xóa câu hỏi này?</p>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="deleteQuestion(this, '${questionId}')">Xóa</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+}
+
+function deleteQuestion(button, questionId) {
+    const modal = button.closest('.modal');
+    const questionItem = document.querySelector(`.question-item[data-question-id="${questionId}"]`);
+    
+    if (questionId && questionId !== 'new') {
+        questionsToDelete.add(questionId);
+    }
+    
+    questionItem.remove();
+    modal.remove();
+    
+    // Cập nhật số thứ tự các câu hỏi
+    const questions = document.querySelectorAll('.question-item');
+    questions.forEach((question, index) => {
+        question.querySelector('h3').textContent = `Câu hỏi ${index + 1}`;
+    });
+}
+
+document.getElementById('quizForm').addEventListener('submit', function(e) {
+    if (questionsToDelete.size > 0) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'questions_to_delete';
+        input.value = Array.from(questionsToDelete).join(',');
+        this.appendChild(input);
+    }
+});
 </script>
 {% endblock %} 

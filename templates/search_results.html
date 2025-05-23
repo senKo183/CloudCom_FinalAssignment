@@ -31,18 +31,18 @@
                                 <i class="fas fa-door-open"></i> Tham gia
                             </a>
                         {% else %}
-                            <form method="POST" action="{{ url_for('join_quiz') }}" class="private-quiz-form">
-                                <div class="input-group">
+                            <form method="POST" action="{{ url_for('join_quiz') }}" class="private-quiz-form" id="joinForm{{ quiz.id }}">
+                                <div class="quiz-code-input" style="margin-bottom:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                                     <input type="text" 
                                            name="quiz_code" 
-                                           class="form-control quiz-code-input" 
+                                           maxlength="6"
+                                           pattern="[A-Z0-9]{6}"
+                                           required
                                            placeholder="Nhập mã bài kiểm tra"
-                                           maxlength="4"
-                                           pattern="[A-Z]{4}"
-                                           required>
-                                    <button type="submit" class="btn btn-join">
-                                        <i class="fas fa-door-open"></i> Tham gia
-                                    </button>
+                                           class="quiz-code-input"
+                                           style="width:320px;min-width:180px;font-size:1rem;text-align:center;letter-spacing:0.3em;border-radius:10px;padding:0.7rem 1rem;">
+                                    <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+                                    <button type="submit" class="submit-btn" style="padding:0.7rem 1.5rem;font-size:1.1rem;border-radius:10px;min-width:100px;">Tham Gia</button>
                                 </div>
                             </form>
                         {% endif %}
@@ -143,7 +143,8 @@
     background: linear-gradient(145deg, #2ecc71, #27ae60);
     color: white;
     border: none;
-    padding: 10px 25px;
+    width: 150px;
+    padding: 10px 12px;
     border-radius: 25px;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -151,6 +152,12 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    min-width: unset;
+    font-size: 1em;
+    justify-content: center;
+    text-align: center;
 }
 
 .btn-join:hover {
@@ -189,28 +196,50 @@
     margin-top: 10px;
 }
 
-.input-group {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-.quiz-code-input {
-    padding: 8px 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
+.quiz-code-input input {
+    width: 320px;
+    padding: 1rem;
     font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    width: 120px;
     text-align: center;
-    transition: all 0.3s ease;
+    letter-spacing: 0.5em;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-transform: uppercase;
 }
 
-.quiz-code-input:focus {
-    border-color: #3498db;
+.quiz-code-input input:focus {
+    border-color: #667eea;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.quiz-code-input input::placeholder {
+    font-size: 0.98rem;
+    color: #888;
+}
+
+.submit-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 1rem;
+    width: auto;
+    min-width: 100px;
+}
+
+.submit-btn:hover {
+    background: #5a6fd6;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+    .quiz-code-input { flex-direction: column !important; gap: 8px !important; }
+    .quiz-code-input input, .submit-btn { width: 100% !important; min-width: 0 !important; }
 }
 </style>
 {% endblock %} 

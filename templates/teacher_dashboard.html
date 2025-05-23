@@ -8,211 +8,235 @@
         <i class="fas fa-chalkboard-teacher"></i>
         <h1>Quản lý bài kiểm tra</h1>
     </div>
-    
-    <div class="dashboard-stats">
-        <div class="stat-card">
-            <i class="fas fa-file-alt"></i>
-            <div class="stat-info">
-                <h3>Tổng số bài kiểm tra</h3>
-                <p class="stat-number">{{ total_quizzes }}</p>
-            </div>
-        </div>
-        <div class="stat-card">
-            <i class="fas fa-users"></i>
-            <div class="stat-info">
-                <h3>Học sinh đã làm bài</h3>
-                <p class="stat-number">{{ total_students }}</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="dashboard-actions">
-        <div class="action-card">
-            <h2>Tạo Bài Kiểm Tra Mới</h2>
-            <a href="{{ url_for('create_quiz') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Tạo Bài Kiểm Tra
-            </a>
-        </div>
-        
-        <div class="action-card">
-            <h2>Quản Lý Bài Kiểm Tra</h2>
-            <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
-                <i class="fas fa-list"></i> Xem Danh Sách
-            </a>
-        </div>
-    </div>
-
-    <div class="recent-quizzes">
-        <div class="section-header">
-            <i class="fas fa-history"></i>
-            <h2>Bài Kiểm Tra Gần Đây</h2>
-        </div>
-        <div class="quiz-list">
-            {% if recent_quizzes %}
-                {% for quiz in recent_quizzes %}
-                <div class="quiz-card">
-                    <div class="quiz-card-header">
-                        <i class="fas fa-file-alt"></i>
-                        <h3>{{ quiz.title }}</h3>
-                    </div>
-                    <div class="quiz-info">
-                        <p><i class="fas fa-clock"></i> <b>Bắt đầu:</b> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                        <p><i class="fas fa-clock"></i> <b>Kết thúc:</b> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
-                        <p><i class="fas fa-hourglass-half"></i> <b>Thời gian:</b> {{ quiz.duration }} phút</p>
+    <div class="dashboard-main-grid">
+        <div class="dashboard-left">
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-blue"><i class="fas fa-file-alt"></i></div>
+                    <div class="stat-info">
+                        <h3>Tổng số bài kiểm tra</h3>
+                        <p class="stat-number">{{ total_quizzes }}</p>
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>Chưa có bài kiểm tra nào.</p>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-green"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3>Học sinh đã làm bài</h3>
+                        <p class="stat-number">{{ total_students }}</p>
+                    </div>
                 </div>
-            {% endif %}
+            </div>
+            <div class="dashboard-actions">
+                <a href="{{ url_for('create_quiz') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Tạo Bài Kiểm Tra
+                </a>
+                <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> Quản Lý Bài Kiểm Tra
+                </a>
+            </div>
+        </div>
+        <div class="dashboard-right">
+            <div class="recent-quizzes">
+                <div class="section-header">
+                    <i class="fas fa-history"></i>
+                    <h2>Bài Kiểm Tra Gần Đây</h2>
+                </div>
+                <div class="quiz-list">
+                    {% if recent_quizzes %}
+                        {% for quiz in recent_quizzes %}
+                        <div class="quiz-card">
+                            <div class="quiz-card-header">
+                                <i class="fas fa-file-alt"></i>
+                                <h3>{{ quiz.title }}</h3>
+                            </div>
+                            <div class="quiz-info">
+                                <p><i class="fas fa-clock"></i> <b>Bắt đầu:</b> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                                <p><i class="fas fa-clock"></i> <b>Kết thúc:</b> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                                <p><i class="fas fa-hourglass-half"></i> <b>Thời gian:</b> {{ quiz.duration }} phút</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>Chưa có bài kiểm tra nào.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Quản lý bài kiểm tra đã hết hạn -->
+            <div class="recent-quizzes" style="margin-top: 2rem;">
+                <div class="section-header">
+                    <i class="fas fa-calendar-times"></i>
+                    <h2>Bài Kiểm Tra Đã Hết Hạn</h2>
+                </div>
+                <div class="quiz-list">
+                    {% if quizzes_expired %}
+                        {% for quiz in quizzes_expired %}
+                        <div class="quiz-card">
+                            <div class="quiz-card-header">
+                                <i class="fas fa-file-alt"></i>
+                                <h3>{{ quiz.title }}</h3>
+                            </div>
+                            <div class="quiz-info">
+                                <p><i class="fas fa-clock"></i> <b>Bắt đầu:</b> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                                <p><i class="fas fa-clock"></i> <b>Kết thúc:</b> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+                                <p><i class="fas fa-users"></i> <b>Học sinh đã làm:</b> {{ quiz.results|length }}</p>
+                                <p><span class="status-badge completed">Đã kết thúc</span></p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <p>Không có bài kiểm tra nào đã hết hạn.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
 .dashboard {
-    padding: 2rem;
+    padding: 0.5rem 1rem 2rem 1rem;
     max-width: 1200px;
     margin: 0 auto;
-    margin-top: 2rem;
+    margin-top: 1.5rem;
 }
-
 .dashboard-header {
     text-align: center;
-    margin-bottom: 2rem;
-    color: #02296b;
+    margin-bottom: 2rem; /* Reduced from 8rem to bring content closer */
+    color: #2d3748;
     border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 1.2rem;
 }
-
 .dashboard-header i {
-    font-size: 2.5rem;
-    color: #667eea;
-    margin-bottom: 0.8rem;
+    font-size: 2.8rem;
+    color: #5a6fd6;
+    margin-bottom: 0.7rem;
 }
-
 .dashboard-header h1 {
-    color: #5e60db;
-    font-size: large;
-    font-size: 1.8rem;
+    color: #070f5e;
+    font-size: 2.1rem;
     font-weight: 800;
+    letter-spacing: 0.5px;
 }
-
+.dashboard-main-grid {
+    display: flex;
+    gap: 2.5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.dashboard-left {
+    flex: 1 1 320px;
+    min-width: 320px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+.dashboard-right {
+    flex: 2 1 500px;
+    min-width: 350px;
+}
 .dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
-    margin-bottom: 2rem;
 }
-
 .stat-card {
     background: white;
-    padding: 1.2rem;
-    border-radius: 10px;
+    padding: 1.5rem 1.2rem;
+    border-radius: 12px;
     border: 2px solid #e2e8f0;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.2rem;
+    box-shadow: 0 2px 8px rgba(90,111,214,0.06);
     transition: all 0.3s ease;
 }
-
 .stat-card:hover {
-    border-color: #667eea;
+    border-color: #5a6fd6;
+    box-shadow: 0 4px 16px rgba(90,111,214,0.13);
     transform: translateY(-2px);
 }
-
-.stat-card i {
-    font-size: 1.8rem;
-    color: #667eea;
+.stat-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: #f3f6fd;
 }
-
+.stat-icon-blue {
+    background: linear-gradient(135deg, #5a6fd6 60%, #8fd3f4 100%);
+    color: #fff;
+}
+.stat-icon-green {
+    background: linear-gradient(135deg, #43e97b 60%, #38f9d7 100%);
+    color: #fff;
+}
 .stat-info h3 {
     color: #4a5568;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     margin-bottom: 0.3rem;
+    font-weight: 600;
 }
-
 .stat-number {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 2.1rem;
+    font-weight: 700;
     text-align: left;
-    color: #0553d8;
+    color: #5a6fd6;
+    margin-top: 0.2rem;
 }
-
 .dashboard-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    display: flex;
+    gap: 1.2rem;
+    justify-content: flex-start;
 }
-
-.action-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    border: 2px solid #e2e8f0;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.action-card:hover {
-    border-color: #667eea;
-    transform: translateY(-2px);
-}
-
-.action-card i {
-    font-size: 2rem;
-    color: #ffffff;
-    
-}
-
-.action-card h2 {
-    color: #2d3748;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
 .btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.7rem 1.2rem;
+    justify-content: center;
+    gap: 0.3rem; 
+    padding: 0.6rem 1.2rem; 
     border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 0.95rem; 
+    font-weight: 600;
     transition: all 0.3s ease;
     text-decoration: none;
-}
-
-.btn-primary {
-    background: #667eea;
-    color: white;
     border: none;
+    box-shadow: 0 2px 6px rgba(90,111,214,0.07);
+    white-space: nowrap; 
 }
-
+.btn-primary {
+    background: linear-gradient(135deg, #2d72aa 60%, #0295af 100%);
+    border-radius: 15px;
+    color: white;
+}
 .btn-secondary {
-    background: white;
-    color: #ffffff;
-    border: 2px solid #667eea;
-    border-radius: 10px;
+    background: linear-gradient(130deg, #18b94e 60%, #147e40 100%);
+    color: white;
+    border-radius: 15px;
 }
-
 .btn:hover {
+    opacity: 0.92;
     transform: translateY(-2px);
-    opacity: 0.9;
+    box-shadow: 0 4px 16px rgba(90,111,214,0.13);
 }
-
+.dashboard-right {
+    width: 100%;
+}
 .recent-quizzes {
     background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
     border: 2px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(90,111,214,0.06);
 }
-
 .section-header {
     display: flex;
     align-items: center;
@@ -221,17 +245,15 @@
     padding-bottom: 0.8rem;
     border-bottom: 2px solid #e2e8f0;
 }
-
 .section-header i {
     font-size: 1.3rem;
-    color: #667eea;
+    color: #5a6fd6;
 }
-
 .section-header h2 {
     color: #2d3748;
     font-size: 1.3rem;
+    font-weight: 700;
 }
-
 .quiz-list {
     display: flex;
     overflow-x: auto;
@@ -239,39 +261,34 @@
     padding: 0.5rem 0.25rem;
     scroll-behavior: smooth;
 }
-
 .quiz-list::-webkit-scrollbar {
     height: 6px;
 }
-
 .quiz-list::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
 }
-
 .quiz-list::-webkit-scrollbar-thumb {
     background: #cbd5e0;
     border-radius: 10px;
 }
-
 .quiz-list::-webkit-scrollbar-thumb:hover {
     background: #a0aec0;
 }
-
 .quiz-card {
     flex: 0 0 280px;
     background: white;
     padding: 1.2rem;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 2px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(90,111,214,0.06);
     transition: all 0.3s ease;
 }
-
 .quiz-card:hover {
-    border-color: #667eea;
+    border-color: #5a6fd6;
+    box-shadow: 0 4px 16px rgba(90,111,214,0.13);
     transform: translateY(-2px);
 }
-
 .quiz-card-header {
     display: flex;
     align-items: center;
@@ -280,32 +297,28 @@
     padding-bottom: 0.6rem;
     border-bottom: 1px solid #e2e8f0;
 }
-
 .quiz-card-header i {
     font-size: 1.1rem;
-    color: #667eea;
+    color: #5a6fd6;
 }
-
 .quiz-card-header h3 {
-    color: white;
-    font-size: 1rem;
-    font-weight: 600;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
 }
-
 .quiz-info p {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     color: #4a5568;
     margin-bottom: 0.6rem;
-    font-size: 0.9rem;
+    font-size: 0.97rem;
 }
-
 .quiz-info i {
-    color: #667eea;
+    color: #5a6fd6;
     width: 16px;
 }
-
 .empty-state {
     text-align: center;
     padding: 2rem;
@@ -314,22 +327,40 @@
     border-radius: 10px;
     margin: 1rem;
 }
-
 .empty-state i {
     font-size: 2.5rem;
     color: #cbd5e0;
     margin-bottom: 0.8rem;
 }
-
+@media (max-width: 1024px) {
+    .dashboard-main-grid {
+        flex-direction: column;
+        gap: 2rem;
+    }
+    .dashboard-left, .dashboard-right {
+        max-width: 100%;
+        min-width: 0;
+    }
+}
 @media (max-width: 768px) {
     .dashboard {
         padding: 1rem;
     }
-    
-    .dashboard-stats,
+    .dashboard-main-grid {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .dashboard-left, .dashboard-right {
+        max-width: 100%;
+        min-width: 0;
+    }
     .dashboard-actions {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    .quiz-list {
+        gap: 0.7rem;
     }
 }
 </style>
-{% endblock %} 
+{% endblock %}

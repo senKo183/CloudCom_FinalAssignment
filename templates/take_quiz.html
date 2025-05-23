@@ -16,17 +16,23 @@
         {% for question in questions %}
         <div class="question-card">
             <h3>Câu hỏi {{ loop.index }}</h3>
-            <p class="question-text">{{ question.question_text }}</p>
-            
+            <p class="question-text" data-raw="{{ question.question_text|e }}"></p>
+            {% if question.image_path %}
+            <div class="question-image">
+                <img src="{{ url_for('static', filename=question.image_path) }}" alt="Hình ảnh câu hỏi" style="max-width: 100%; margin-top: 15px;">
+            </div>
+            {% endif %}
             {% if question.question_type == 'multiple_choice' %}
                 <div class="options">
+                    {% set answer_count = 0 %}
                     {% for answer in question.answers %}
+                    {% set answer_count = answer_count + 1 %}
                     <div class="option">
                         <input type="radio" 
-                               name="answer_{{ question.id }}" 
-                               id="option_{{ question.id }}_{{ loop.index }}"
-                               value="{{ answer.id }}"
-                               required>
+                                name="answer_{{ question.id }}" 
+                                id="option_{{ question.id }}_{{ loop.index }}"
+                                value="{{ answer.id }}"
+                                required>
                         <label for="option_{{ question.id }}_{{ loop.index }}">
                             {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
                             <span class="option-letter">{{ option_letter }}.</span>
@@ -34,14 +40,20 @@
                         </label>
                     </div>
                     {% endfor %}
+                    <!-- {% if answer_count == 0 %}
+                        <p class="error">Không có đáp án cho câu hỏi này!</p>
+                    {% endif %} -->
+
+                    <!--Lỗi "Không có đáp án cho câu hỏi này!"-->
+                    <!--fix ổn-->
                 </div>
             {% else %}
                 <div class="fill-in-blank">
                     <input type="text" 
-                           name="answer_{{ question.id }}"
-                           class="answer-input"
-                           placeholder="Nhập câu trả lời của bạn"
-                           required>
+                            name="answer_{{ question.id }}"
+                            class="answer-input"
+                            placeholder="Nhập câu trả lời của bạn"
+                            required>
                 </div>
             {% endif %}
         </div>
@@ -137,6 +149,11 @@
     font-weight: bold;
     color: #dc3545;
 }
+/* @media (max-width: 600px) {
+    .question-card {
+        padding: 15px;
+    }
+} */
 </style>
 
 <script>
@@ -170,5 +187,32 @@ window.onbeforeunload = function() {
 document.getElementById('quiz-form').onsubmit = function() {
     window.onbeforeunload = null;
 };
+</script>
+<!-- MathJax for LaTeX rendering -->
+<script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.question-text').forEach(function(el) {
+        // Lấy nội dung gốc từ thuộc tính data-raw
+        const raw = el.getAttribute('data-raw') || '';
+        // Chuyển Markdown sang HTML
+        el.innerHTML = marked.parse(raw);
+        // Render LaTeX nếu có MathJax
+        if (window.MathJax) {
+            MathJax.typesetPromise([el]);
+        }
+    });
+});
 </script>
 {% endblock %} 

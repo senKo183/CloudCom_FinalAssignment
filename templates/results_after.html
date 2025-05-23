@@ -9,7 +9,7 @@
         
         <div class="result-details">
             <div class="result-item">
-                <strong>Tên bài kiểm tra:</strong> 
+                <strong>  Tên bài kiểm tra:</strong> 
                 <span>{{ quiz.title }}</span>
             </div>
             
@@ -37,19 +37,19 @@
             <ul class="question-list">
                 {% for question, user_answer, correct_answer, is_correct, question_type in results %}
                 <li class="question-item">
-                    <div class="question-text"><strong>{{ question }}</strong></div>
+                    <div class="question-text"><strong>{{ question|safe }}</strong></div>
                     <div class="user-answer">
                         Câu trả lời của bạn: 
                         {% if question_type == 'multiple_choice' %}
-                            <strong>{{ user_answer }}</strong>
+                            <strong>{{ user_answer|safe }}</strong>
                         {% else %}
-                            <strong>{{ user_answer }}</strong>
+                            <strong>{{ user_answer|safe }}</strong>
                         {% endif %}
                     </div>
                     {% if is_correct %}
                         <div class="correct">✅ Đúng</div>
                     {% else %}
-                        <div class="incorrect">❌ Sai - Đáp án đúng: <strong>{{ correct_answer }}</strong></div>
+                        <div class="incorrect">❌ Sai - Đáp án đúng: <strong>{{ correct_answer|safe }}</strong></div>
                     {% endif %}
                 </li>
                 {% endfor %}
@@ -64,44 +64,78 @@
 
 <style>
 .results-container {
-    max-width: 800px;
-    margin: 50px auto;
+    max-width: 700px;
+    margin: 40px auto;
     text-align: center;
 }
 
 .results-card {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    padding: 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 28px 18px 22px 18px;
+    border: 1px solid #e5e7eb;
+}
+
+.results-card h1 {
+    color: #222;
+    font-size: 1.7rem;
+    margin-bottom: 14px;
+    font-weight: 600;
 }
 
 .result-details {
-    margin: 20px 0;
+    margin: 18px 0 12px 0;
 }
 
 .result-item {
-    margin-bottom: 15px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 8px 0;
+    padding-left: 12px; 
+    background: #f7fafc;
+    border-radius: 4px;
+    font-size: 1.04rem;
+    text-align: right;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .score {
-    font-size: 1.2em;
-    color: #28a745;
+    font-size: 1.15em;
+    color: #16a34a;
     font-weight: bold;
 }
 
 .result-status .alert {
-    margin: 20px 0;
-    padding: 10px;
-    font-weight: bold;
+    margin: 14px 0 0 0;
+    padding: 8px 0;
+    padding-left: 12px; 
+    font-weight: 500;
+    border-radius: 5px;
+    font-size: 1.02rem;
+}
+.alert-success {
+    background: #e6fbe8;
+    color: #15803d;
+    border-left: 4px solid #22c55e;
+}
+.alert-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-left: 4px solid #ef4444;
 }
 
 .question-results {
-    margin-top: 20px;
+    margin-top: 22px;
     text-align: left;
+}
+
+.question-results h2 {
+    color: #222;
+    font-size: 1.13rem;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .question-list {
@@ -110,23 +144,77 @@
 }
 
 .question-item {
-    background: #f1f1f1;
-    padding: 15px;
+    background: #f3f4f6;
+    padding: 12px 10px 10px 10px;
     margin: 10px 0;
-    border-radius: 5px;
+    border-radius: 6px;
     text-align: left;
+    border-left: 4px solid #e5e7eb;
 }
-
+.question-text {
+    font-size: 1.01rem;
+    color: #222;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+.user-answer {
+    margin-bottom: 5px;
+    color: #444;
+    font-size: 0.98rem;
+}
 .correct {
-    color: green;
-    font-size: 1.2em;
-    font-weight: bold;
+    color: #16a34a;
+    font-size: 1.01em;
+    font-weight: 500;
 }
-
 .incorrect {
-    color: red;
-    font-size: 1.2em;
-    font-weight: bold;
+    color: #dc2626;
+    font-size: 1.01em;
+    font-weight: 500;
+}
+.actions {
+    margin-top: 22px;
+}
+.btn.btn-primary {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    padding: 8px 22px;
+    font-size: 1rem;
+    font-weight: 500;
+    box-shadow: none;
+    transition: background 0.2s;
+    letter-spacing: 0.2px;
+    display: inline-block;
+}
+.btn.btn-primary:hover {
+    background: #4338ca;
+    color: #fff;
+}
+@media (max-width: 600px) {
+    .results-card {
+        padding: 8px 2vw 12px 2vw;
+    }
+    .result-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+    .question-item {
+        padding: 8px 4px 7px 7px;
+    }
 }
 </style>
+<script type="text/javascript">
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 {% endblock %}
