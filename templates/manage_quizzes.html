@@ -4,262 +4,265 @@
 
 {% block content %}
 <style>
+/* Container tổng */
 .container {
     max-width: 1400px;
-    margin: 30px auto 2rem auto;
-    padding: 2.5rem 3.5rem;
-    background: white;
+    margin: 40px auto;
+    padding: 2.5rem;
+    background: #fff;
     border-radius: 15px;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2.5rem;
+    text-align: center;
 }
 
 h1 {
-    font-size: 2.4rem;
-    color: #2c3e50;
-    margin-bottom: 2.5rem;
+    font-size: 2.2rem;
+    font-family: Arial, sans-serif;
+    color: #fff;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: center;
+    gap: 0.6rem;
+    font-weight: 700;
 }
 
 h1 i {
-    color: #4CAF50;
+    color: #fff;
 }
 
+/* Action Bar */
 .action-bar {
-    margin-bottom: 3rem;
     display: flex;
-    gap: 1rem;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 2.5rem;
 }
 
 .btn {
-    padding: 0.9rem 1.8rem;
-    border-radius: 10px;
+    padding: 0.9rem 2rem;
+    border-radius: 25px;
     font-size: 1.1rem;
+    font-family: Arial, sans-serif;
     display: inline-flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.6rem;
     text-decoration: none;
-    transition: all 0.3s ease;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+    border: none; /* No border for action bar buttons */
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    color: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    background-color: var(--primary-color); /* #9370DB */
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    background-color: var(--secondary-color); /* #B19CD9 */
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .btn-secondary {
-    background: #f8f9fa;
-    color: white;
-    border: 1px solid #e0e0e0;
+    background-color: #f5f5f4;
+    color: #fff;
 }
 
 .btn-secondary:hover {
-    background: #f1f3f5;
-    color: white;
+    background-color: var(--secondary-color);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Danh sách bài kiểm tra */
 .quiz-list-manage {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 2.5rem;
+}
+
+/* Card bài kiểm tra */
+.quiz-card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.3s, transform 0.3s;
     display: flex;
     flex-direction: column;
-    gap: 1.8rem;
-}
-
-.quiz-card {
-    padding: 3rem 3.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    border-radius: 12px;
-    background: #f8f9fa;
-    transition: all 0.3s ease;
-    margin-bottom: 2rem;
-    border: 2px solid transparent;
+    gap: 1.5rem;
 }
 
 .quiz-card:hover {
-    border-color: #7499df;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px);
 }
 
-.quiz-info {
-    flex: 1;
-    margin-right: 4rem;
-}
-
+/* Thông tin quiz */
 .quiz-info h3 {
-    font-size: 2rem;
-    color: #ffffff;
-    margin-bottom: 1.5rem;
-    font-weight: 600;
+    font-size: 1.6rem;
+    font-family: 'Times New Roman', Times, serif;
+    color: #fff;
+    border-radius: 15px;
+    padding: 1rem;
+    margin: 0;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    word-wrap: break-word;
 }
 
 .quiz-code {
-    font-size: 1.4rem;
-    color: #6c757d;
-    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin: 1rem 0;
+    font-weight: 500;
 }
 
 .quiz-info-text {
-    font-size: 1.4rem;
-    color: #4a5568;
-    margin: 1.5rem 0;
+    font-size: 1rem;
+    color: var(--text-color);
+    margin: 0.8rem 0;
     display: flex;
     align-items: center;
-    gap: 1.2rem;
+    gap: 0.8rem;
+    font-family: Arial, sans-serif;
+    font-weight: 400;
 }
 
 .quiz-info-text i {
-    color: #4CAF50;
-    width: 28px;
-    font-size: 1.5rem;
+    color: var(--primary-color);
+    font-size: 1.2rem;
 }
 
+/* Các hành động */
 .quiz-actions {
     display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-    min-width: 220px;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    padding: 1rem 0;
+    background: #ffffff;
+    border-radius: 10px;
 }
 
 .btn-small {
-    padding: 1.2rem 2rem;
-    font-size: 1.2rem;
-    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 20px;
+    flex: 1 1 auto;
+    min-width: 110px; /* Uniform for most buttons */
+    display: flex;
+    align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-info {
-    background: #e3f2fd;
-    color: #1565c0;
+    background-color: #e5e7eb;
+    color: var(--text-color);
 }
 
 .btn-warning {
-    background: #fff3e0;
-    color: #f57c00;
+    background-color: var(--secondary-color);
+    color: #fff;
 }
 
 .btn-danger {
-    background: #ffebee;
-    color: #c62828;
+    background-color: #db1c1c;
+    color: #fff;
+    padding: 0.4rem 0.6rem; /* Reduced horizontal padding for narrower width */
+    font-size: 0.85rem;
+    align-items: center;
+    min-width: 80px; /* Smaller min-width for narrower button */
+    max-width: 10px;
 }
 
 .btn-small:hover {
-    transform: translateX(5px);
-    filter: brightness(95%);
+    background-color: var(--primary-color);
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Trạng thái bài kiểm tra */
+.visibility-status {
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: #b5e0c5;
+    color: #000;
+}
+
+.visibility-status.private {
+    background-color: #e5e7eb;
+    color: var(--text-color);
+}
+
+/* Khi không có bài */
 .no-quizzes {
     text-align: center;
-    padding: 4rem 2rem;
-    background: #f8f9fa;
-    border-radius: 12px;
+    padding: 3rem;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .no-quizzes p {
     font-size: 1.3rem;
-    color: #4a5568;
-    margin-bottom: 2rem;
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
 }
 
-@media (max-width: 1200px) {
-    .quiz-card {
-        padding: 2.5rem 3rem;
-    }
-
-    .quiz-info h3 {
-        font-size: 1.8rem;
-    }
-
-    .quiz-info-text {
-        font-size: 1.3rem;
-    }
-}
-
-@media (max-width: 992px) {
+/* Responsive */
+@media (max-width: 1024px) {
     .container {
-        margin: 25px 1.5rem 1.5rem 1.5rem;
+        max-width: 100%;
+        padding: 1.5rem;
     }
 
-    .quiz-card {
-        padding: 2rem 2.5rem;
-    }
-
-    .quiz-info h3 {
-        font-size: 1.6rem;
-    }
-
-    .quiz-info-text {
-        font-size: 1.2rem;
+    .quiz-list-manage {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     }
 }
 
 @media (max-width: 768px) {
-    .container {
-        margin: 20px 1rem 1rem 1rem;
+    .action-bar {
+        flex-direction: column;
+        gap: 15px;
     }
 
-    .quiz-card {
-        padding: 2rem;
-    }
-
-    .quiz-info {
-        margin-right: 0;
-        margin-bottom: 2rem;
-    }
-
-    .quiz-info h3 {
-        font-size: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .quiz-info-text {
-        font-size: 1.1rem;
-        margin: 1rem 0;
+    .btn {
+        width: 100%;
     }
 
     .quiz-actions {
-        flex-direction: row;
-        flex-wrap: wrap;
-        min-width: 100%;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .btn-small {
-        flex: 1 1 calc(50% - 0.6rem);
-        padding: 1rem 1.5rem;
-        font-size: 1.1rem;
+        min-width: 100%; /* Full width on small screens */
     }
-}
-
-.visibility-status {
-    font-weight: 600;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-}
-
-.visibility-status.public {
-    color: #2e7d32;
-    background-color: #e8f5e9;
-}
-
-.visibility-status.private {
-    color: #c62828;
-    background-color: #ffebee;
 }
 </style>
 
 <div class="container">
-    <h1><i class="fas fa-tasks"></i> Quản Lý Bài Kiểm Tra</h1>
-    
+    <div class="header">
+        <h1><i class="fas fa-tasks"></i> Quản Lý Bài Kiểm Tra</h1>
+    </div>
+
     <div class="action-bar">
         <a href="{{ url_for('create_quiz') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Tạo Bài Kiểm Tra Mới
@@ -296,25 +299,25 @@ h1 i {
                     </div>
                     <div class="quiz-info-text">
                         <i class="fas fa-globe"></i>
-                        Trạng thái: <span class="visibility-status {{ 'public' if quiz.is_public else 'private' }}">
+                        Trạng thái: 
+                        <span class="visibility-status {{ 'public' if quiz.is_public else 'private' }}">
                             {{ 'Công khai' if quiz.is_public else 'Riêng tư' }}
                         </span>
                     </div>
                 </div>
-                
                 <div class="quiz-actions">
                     <a href="{{ url_for('view_quiz', quiz_id=quiz.id) }}" class="btn btn-small btn-info">
                         <i class="fas fa-eye"></i> Xem chi tiết
                     </a>
                     <a href="{{ url_for('quiz_results', quiz_id=quiz.id) }}" class="btn btn-small btn-primary">
-                        <i class="fas fa-chart-bar"></i> Xem kết quả
+                        <i class="fas fa-chart-bar"></i> Kết quả
                     </a>
                     <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-small btn-warning">
                         <i class="fas fa-edit"></i> Chỉnh sửa
                     </a>
                     <a href="{{ url_for('toggle_quiz_visibility', quiz_id=quiz.id) }}" class="btn btn-small {{ 'btn-secondary' if quiz.is_public else 'btn-primary' }}">
                         <i class="fas {{ 'fa-lock' if quiz.is_public else 'fa-globe' }}"></i>
-                        {{ 'Chuyển thành riêng tư' if quiz.is_public else 'Công khai bài kiểm tra' }}
+                        {{ 'Riêng tư' if quiz.is_public else 'Công khai' }}
                     </a>
                     <a href="{{ url_for('delete_quiz', quiz_id=quiz.id) }}" class="btn btn-small btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa bài kiểm tra này?')">
                         <i class="fas fa-trash"></i> Xóa

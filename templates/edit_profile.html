@@ -12,7 +12,7 @@
     </div>
 
     <div class="edit-form-card">
-        <form action="{{ url_for('edit_profile') }}" method="POST" class="edit-form">
+        <form action="{{ url_for('edit_profile') }}" method="POST" class="edit-form" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="username">Tên đăng nhập</label>
                 <input type="text" id="username" value="{{ user.username }}" disabled>
@@ -43,6 +43,22 @@
             <div class="form-group">
                 <label for="bio">Giới thiệu</label>
                 <textarea id="bio" name="bio" rows="4">{{ profile.bio or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="avatar">Ảnh đại diện:</label>
+                <input type="file" name="avatar" id="avatar" accept="image/*" style="display:none;">
+                <div id="avatar-clickable" style="margin-top:10px; display:inline-block; cursor:pointer; position:relative;">
+                    {% if profile.avatar %}
+                        <img src="{{ url_for('static', filename=profile.avatar) }}" alt="Avatar" style="width:80px;height:80px;object-fit:cover;border-radius:50%;">
+                        <span class="avatar-tooltip">Thay đổi ảnh đại diện</span>
+                    {% else %}
+                        <div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border-radius:50%;font-size:2.5rem;color:#bbb;">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <span class="avatar-tooltip">Thêm ảnh đại diện</span>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="form-actions">
@@ -218,5 +234,37 @@
         width: 100%;
     }
 }
+
+#avatar-clickable { position: relative; }
+.avatar-tooltip {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: -35px;
+    transform: translateX(-50%);
+    background: #667eea;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+#avatar-clickable:hover .avatar-tooltip {
+    display: block;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var clickable = document.getElementById('avatar-clickable');
+    var input = document.getElementById('avatar');
+    if (clickable && input) {
+        clickable.addEventListener('click', function() {
+            input.click();
+        });
+    }
+});
+</script>
 {% endblock %} 

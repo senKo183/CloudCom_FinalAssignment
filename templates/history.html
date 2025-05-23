@@ -73,27 +73,33 @@
                                 <th>Tên bài kiểm tra</th>
                                 <th>Điểm số</th>
                                 <th>Ngày nộp bài</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for result in results %}
                             <tr>
-                                <td>
+                                <td data-label="Tên bài kiểm tra">
                                     <div class="quiz-title">
                                         <i class="fas fa-file-alt"></i>
                                         {{ result.quiz.title }}
                                     </div>
                                 </td>
-                                <td class="score-cell">
+                                <td class="score-cell" data-label="Điểm số">
                                     <span class="score-badge {% if result.score >= 8 %}high{% elif result.score >= 5 %}medium{% else %}low{% endif %}">
                                         {{ "%.2f"|format(result.score) }}/10
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="Ngày nộp bài">
                                     <div class="date-info">
                                         <i class="far fa-clock"></i>
                                         {{ result.submitted_at.strftime('%d/%m/%Y %H:%M') }}
                                     </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('review_result', result_id=result.id) }}" class="btn btn-view">
+                                        <i class="fas fa-eye"></i> Xem chi tiết
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -161,15 +167,14 @@
                                 <td class="actions-cell">
                                     <div class="action-buttons">
                                         <a href="{{ url_for('view_quiz', quiz_id=quiz.id) }}" class="btn btn-view" title="Xem chi tiết">
-                                            <i class="fas fa-eye"></i>
-                                            Xem chi tiết
+                                            <i class="fas fa-eye"></i> Chi tiết
                                         </a>
-                                        <a href="{{ url_for('quiz_students', quiz_id=quiz.id) }}" class="btn btn-students" title="Danh sách học sinh">
-                                            <i class="fas fa-users"></i>
-                                            Danh sách học sinh
+                                        <a href="{{ url_for('quiz_students', quiz_id=quiz.id) }}" class="btn btn-students" title="Học sinh đã làm bài">
+                                            <i class="fas fa-users"></i> Học sinh
                                         </a>
                                     </div>
                                 </td>
+                                
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -237,7 +242,7 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     transition: transform 0.3s ease;
 }
 
@@ -320,41 +325,65 @@
 
 .custom-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    border-collapse: collapse;
     background: white;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    border: 2px solid #ccc;
+    box-shadow: 0 4px 16px rgba(90,111,214,0.08);
+    border: 3px solid #000 !important;
+    margin-bottom: 0;
+}
+
+.custom-table th, .custom-table td {
+    border: 1px solid #b1b7c6;
 }
 
 .custom-table th {
-    background: #7197e2;
-    padding: 15px;
-    font-weight: 600;
-    color: #0c2241;
+    background: linear-gradient(90deg, #5a6fd6 60%, #8fd3f4 100%);
+    padding: 16px 12px;
+    font-weight: 700;
+    color: #fff;
     text-align: left;
+    font-size: 1.08rem;
+    border: 1px solid #b1b7c6;
 }
 
 .custom-table td {
-    padding: 15px;
-    border-top: 1px solid #e5e7eb;
+    padding: 15px 12px;
+    font-size: 1.04rem;
+    color: #333;
+    background: #fff;
+    border: 1px solid #b1b7c6;
+}
+
+.custom-table tbody tr:nth-child(even) td {
+    background: #f7f9fc;
+}
+
+.custom-table tbody tr:hover td {
+    background: #eaf1fb;
+    transition: background 0.2s;
 }
 
 .quiz-title {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #111827;
-    font-weight: 500;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.score-cell {
+    text-align: center;
 }
 
 .score-badge {
-    padding: 6px 12px;
+    padding: 7px 16px;
     border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(90,111,214,0.08);
 }
 
 .score-badge.high {
@@ -377,13 +406,16 @@
     align-items: center;
     gap: 8px;
     color: #6b7280;
+    font-size: 1.01rem;
 }
 
 .status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 0.82rem;
     font-weight: 500;
+    white-space: nowrap;
+    display: inline-block;
 }
 
 .status-badge.upcoming {
@@ -417,13 +449,42 @@
 }
 
 .btn-view {
-    background: #dbeafe;
-    color: #1e40af;
+    background: linear-gradient(90deg, #5a6fd6 60%, #399aca 100%);
+    color: #fff;
+    border-radius: 32px;
+    font-weight: 600;
+    padding: 4px 14px;
+    box-shadow: 0 2px 8px #5a6fd622;
+    border: none;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    margin: 0 auto;
+    font-size: 1rem;
+}
+.btn-view:hover {
+    background: linear-gradient(90deg, #3d4fa3 60%, #5a6fd6 100%);
+    color: #fff;
+    transform: translateY(-2px) scale(1.04);
 }
 
 .btn-students {
-    background: #dcfce7;
-    color: #166534;
+    background: linear-gradient(90deg, #26b948 60%, #11cc43 100%);
+    color: #fff;
+    border-radius: 32px;
+    font-weight: 600;
+    padding: 3px 8px;
+    box-shadow: 0 2px 8px #28a74522;
+    border: none;
+    transition: all 0.2s;
+}
+.btn-students:hover {
+    background: linear-gradient(90deg, #218838 60%, #28a745 100%);
+    color: #fff;
+    transform: translateY(-2px) scale(1.04);
 }
 
 .btn-create {
@@ -454,6 +515,65 @@
 .empty-state p {
     color: #6b7280;
     margin: 0 0 20px;
+}
+
+.time-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+    font-size: 0.97rem;
+    white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+    .custom-table th, .custom-table td {
+        padding: 7px 3px;
+        font-size: 0.93rem;
+    }
+    .btn-view, .btn-students {
+        font-size: 0.88rem;
+        padding: 2px 5px;
+        text-align: center;
+    }
+    .status-badge {
+        font-size: 0.78rem;
+        padding: 3px 6px;
+    }
+    .time-info {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .custom-table, .custom-table thead, .custom-table tbody, .custom-table th, .custom-table td, .custom-table tr {
+        display: block;
+    }
+    .custom-table thead tr {
+        display: none;
+    }
+    .custom-table tr {
+        margin-bottom: 1.2rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(90,111,214,0.08);
+        background: #fff;
+    }
+    .custom-table td {
+        padding: 12px 10px;
+        border: none;
+        position: relative;
+        font-size: 0.97rem;
+    }
+    .custom-table td:before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #5a6fd6;
+        display: block;
+        margin-bottom: 4px;
+    }
+    .score-cell {
+        text-align: left;
+    }
 }
 
 @media (max-width: 768px) {

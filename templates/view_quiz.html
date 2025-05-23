@@ -5,36 +5,44 @@
 {% block content %}
 <div class="container">
     <div class="quiz-header">
-        <h1>{{ quiz.title }}</h1>
+        <h1>{{ quiz.title|safe}}</h1>
         <div class="quiz-info">
-            <p class="quiz-info-text"><strong>Thời gian làm bài:</strong> {{ quiz.duration }} phút</p>
-            <p class="quiz-info-text"><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M') }}</p>
-            <p class="quiz-info-text"><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M') }}</p>
+            <p class="quiz-info-text"><strong>Thời gian làm bài:</strong> {{ quiz.duration|safe }} phút</p>
+            <p class="quiz-info-text"><strong>Thời gian bắt đầu:</strong> {{ quiz.start_time.strftime('%d/%m/%Y %H:%M')|safe }}</p>
+            <p class="quiz-info-text"><strong>Thời gian kết thúc:</strong> {{ quiz.end_time.strftime('%d/%m/%Y %H:%M')|safe }}</p>
         </div>
     </div>
 
     <div class="questions-list">
         {% for question in questions %}
         <div class="question-card">
-            <h3>Câu hỏi {{ loop.index }}</h3>
-            <p class="question-text">{{ question.question_text }}</p>
+            <h3>Câu hỏi {{ loop.index|safe }}</h3>
+            <!-- Hiển thị nội dung câu hỏi -->
+            <p class="question-text">{{ question.question_text|safe }}</p>
+            
+            <!-- Hiển thị hình ảnh nếu có -->
+            {% if question.image_path %}
+            <div class="question-image">
+                <img src="{{ url_for('static', filename=question.image_path) }}" alt="Hình ảnh câu hỏi" style="max-width: 100%; margin-top: 15px;">
+            </div>
+            {% endif %}
             
             {% if question.question_type == 'multiple_choice' %}
                 <div class="options">
                     {% for answer in question.answers %}
                     <div class="option">
                         {% set option_letter = ['A', 'B', 'C', 'D'][loop.index0] %}
-                        <span class="option-letter">{{ option_letter }}.</span>
-                        <span class="answer-text">{{ answer.answer_text }}</span>
+                        <span class="option-letter">{{ option_letter|safe }}.</span>
+                        <span class="answer-text">{{ answer.answer_text|safe }}</span>
                         {% if answer.answer_text == question.correct_answer %}
-                            <span class="correct-answer-badge">Đáp án đúng</span>
+                            <span class="correct-answer-badge">{{"Đáp án đúng"|safe}}</span>
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
             {% else %}
                 <div class="fill-in-blank">
-                    <p><strong>Đáp án:</strong> {{ question.correct_answer }}</p>
+                    <p><strong>Đáp án:</strong> {{ question.correct_answer|safe }}</p>
                 </div>
             {% endif %}
         </div>
@@ -42,10 +50,11 @@
     </div>
 
     <div class="action-buttons">
-        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">Chỉnh sửa</a>
-        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">Quay lại</a>
+        <a href="{{ url_for('edit_quiz', quiz_id=quiz.id) }}" class="btn btn-primary">{{"Chỉnh sửa"|safe}}</a>
+        <a href="{{ url_for('manage_quizzes') }}" class="btn btn-secondary">{{"Quay lại"|safe}}</a>
     </div>
 </div>
+
 
 <style>
 .container {
@@ -211,7 +220,7 @@
 }
 p.quiz-info-text{
     font-size: 1rem;
-    color: #010744;
+    color: #ffffff;
 }
 p.question-text{
     font-size: 1rem;
@@ -244,4 +253,15 @@ p.question-text{
     }
 }
 </style>
+<script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
 {% endblock %} 

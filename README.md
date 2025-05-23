@@ -1,16 +1,3 @@
-# Mathquiz
-
-## Tính Năng Chính
-- Quản lý tài khoản: Giáo viên có thể đăng ký, đăng nhập để tạo và quản lý bài kiểm tra.
-
-- Tạo bài kiểm tra: Hỗ trợ nhiều loại câu hỏi (trắc nghiệm, điền vào chỗ trống, câu hỏi tự luận).
-
-- Hỗ trợ công thức toán học: Cho phép nhập công thức toán học bằng LaTeX.
-
-- Làm bài và chấm điểm: Học sinh có thể làm bài trực tuyến, hệ thống tự động chấm điểm các câu hỏi trắc nghiệm.
-
-- Báo cáo kết quả: Hiển thị điểm số và thống kê kết quả sau khi hoàn thành bài kiểm tra.
-
 # ***Thông tin nhóm***
 ## **Danh sách thành viên**
 Thành viên 1: Nguyễn Quang Mạnh - 22645001   

@@ -4,127 +4,197 @@
 
 {% block content %}
 <div class="create-quiz-container">
-    <div class="page-header">
-        <i class="fas fa-edit"></i>
-        <h1>Tạo Bài Kiểm Tra Mới</h1>
-    </div>
-    
-    <form method="POST" class="quiz-form">
-        <div class="form-section">
-            <h2><i class="fas fa-info-circle"></i> Thông tin cơ bản</h2>
+    <div class="quiz-card">
+        <div class="page-header">
+            <i class="fas fa-edit"></i>
+            <h1>Tạo Bài Kiểm Tra Mới</h1>
+        </div>
+
+        <!-- CSV Upload Section -->
+        <div class="form-section csv-upload-section">
+            <h2><i class="fas fa-file-csv"></i> Tạo câu hỏi từ file CSV</h2>
             <div class="form-group">
-                <label for="title"><i class="fas fa-heading"></i> Tiêu đề bài kiểm tra:</label>
-                <input type="text" id="title" name="title" required>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="start_time"><i class="far fa-clock"></i> Thời gian bắt đầu:</label>
-                    <input type="datetime-local" id="start_time" name="start_time" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="end_time"><i class="fas fa-clock"></i> Thời gian kết thúc:</label>
-                    <input type="datetime-local" id="end_time" name="end_time" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="duration"><i class="fas fa-hourglass-half"></i> Thời gian làm bài (phút):</label>
-                    <input type="number" id="duration" name="duration" min="1" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="max_attempts"><i class="fas fa-redo"></i> Số lần làm bài tối đa:</label>
-                    <input type="number" id="max_attempts" name="max_attempts" min="1" placeholder="Để trống nếu không giới hạn">
-                    <small class="form-text text-muted">Nếu để trống, học sinh có thể làm bài không giới hạn số lần</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="is_public" class="checkbox-label">
-                        <input type="checkbox" id="is_public" name="is_public">
-                        <span><i class="fas fa-globe"></i> Công khai bài kiểm tra</span>
-                    </label>
-                    <small class="form-text text-muted">Bài kiểm tra công khai sẽ hiển thị trong kết quả tìm kiếm</small>
+                <label for="csv_file"><i class="fas fa-upload"></i> Tải lên file CSV:</label>
+                <input type="file" id="csv_file" accept=".csv" onchange="parseCSV(this)">
+                <small class="form-text text-muted">
+                    File CSV cần có 6 cột: Question, Correct Answer, Option A, Option B, Option C, Option D.
+                </small>
+                <small>
+                    Ví dụ: "What is $2+2$?","4","2","3","4","5"
+                </small>
+                <a href="{{ url_for('static', filename='csv_template/quiz_template.csv') }}" download class="csv-template-link">
+                    <i class="fas fa-download"></i> Tải mẫu CSV
+                </a>
+                <div id="csv-error" class="csv-error" style="display: none; margin-top: 0.5rem;">
+                    <i class="fas fa-exclamation-circle"></i> <span id="csv-error-message">Lỗi: File CSV không đúng định dạng.</span>
                 </div>
             </div>
         </div>
 
-        <div id="questions-container">
-            <h2><i class="fas fa-question-circle"></i> Câu hỏi</h2>
-            <div class="question-item">
-                <div class="question-header">
-                    <i class="fas fa-list-ol"></i>
-                    <span>Câu hỏi 1</span>
-                </div>
-
-                <div class="form-group">
-                    <label>Nội dung câu hỏi:</label>
-                    <textarea name="questions[]" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-tasks"></i> Loại câu hỏi:</label>
-                    <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
-                        <option value="multiple_choice">Trắc nghiệm</option>
-                        <option value="text">Điền đáp án</option>
-                    </select>
-                </div>
-
-                <div class="multiple-choice-options">
+        <!-- Quiz Form -->
+        <form method="POST" action="{{ url_for('create_quiz') }}" class="quiz-form" enctype="multipart/form-data">
+            <div class="form-section">
+                <h2><i class="fas fa-info-circle"></i> Thông tin cơ bản</h2>
+                <div class="form-row">
                     <div class="form-group">
-                        <label><i class="fas fa-list"></i> Các lựa chọn:</label>
-                        <div class="options-grid">
-                            <div class="option-item">
-                                <span class="option-label">A</span>
-                                <input type="text" name="option1[]" placeholder="Lựa chọn A" required>
+                        <label for="title"><i class="fas fa-heading"></i> Tiêu đề bài kiểm tra:</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="start_time"><i class="far fa-clock"></i> Thời gian bắt đầu:</label>
+                        <input type="datetime-local" id="start_time" name="start_time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end_time"><i class="fas fa-clock"></i> Thời gian kết thúc:</label>
+                        <input type="datetime-local" id="end_time" name="end_time" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="duration"><i class="fas fa-hourglass-half"></i> Thời gian làm bài (phút):</label>
+                        <input type="number" id="duration" name="duration" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="max_attempts"><i class="fas fa-redo"></i> Số lần làm bài tối đa:</label>
+                        <input type="number" id="max_attempts" name="max_attempts" min="1" placeholder="Để trống nếu không giới hạn">
+                        <small class="form-text text-muted">Nếu để trống, học sinh có thể làm bài không giới hạn số lần</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="is_public" class="checkbox-label">
+                            <input type="checkbox" id="is_public" name="is_public">
+                            <span><i class="fas fa-globe"></i> Công khai bài kiểm tra</span>
+                        </label>
+                        <small class="form-text text-muted">Bài kiểm tra công khai sẽ hiển thị trong kết quả tìm kiếm</small>
+                    </div>
+                </div>
+            </div>
+
+            <div id="questions-container">
+                <h2><i class="fas fa-question-circle"></i> Câu hỏi</h2>
+                <div class="question-item">
+                    <div class="question-header">
+                        <i class="fas fa-list-ol"></i>
+                        <span>Câu hỏi 1</span>
+                        <button type="button" class="btn btn-delete" onclick="deleteQuestion(this)">
+                            <i class="fas fa-trash"></i> Xóa câu hỏi
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nội dung câu hỏi:</label>
+                        <div class="editor-wrapper">
+                            <div class="latex-toolbar">
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\frac{a}{b}')">
+                                    <i class="fas fa-divide"></i> \frac{a}{b}
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\sqrt{x}')">
+                                    <i class="fas fa-square-root-alt"></i> \sqrt{x}
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\sum_{i=1}^{n}')">
+                                    <i class="fas fa-sigma"></i> \sum
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\int_{a}^{b}')">
+                                    <i class="fas fa-integral"></i> \int
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, 'x^2')">
+                                    x<sup>2</sup>
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, 'x_i')">
+                                    x<sub>i</sub>
+                                </button>
                             </div>
-                            <div class="option-item">
-                                <span class="option-label">B</span>
-                                <input type="text" name="option2[]" placeholder="Lựa chọn B" required>
+                            <textarea class="math-editor" name="questions[]" required oninput="updatePreview(this)"></textarea>
+                            <div class="preview-area">
+                                <div class="math-preview">Xem trước LaTeX</div>
                             </div>
-                            <div class="option-item">
-                                <span class="option-label">C</span>
-                                <input type="text" name="option3[]" placeholder="Lựa chọn C" required>
-                            </div>
-                            <div class="option-item">
-                                <span class="option-label">D</span>
-                                <input type="text" name="option4[]" placeholder="Lựa chọn D" required>
+                            <div class="image-upload">
+                                <label for="question_image_1"><i class="fas fa-image"></i> Thêm hình ảnh</label>
+                                <input type="file" id="question_image_1" name="question_images[]" accept="image/*" onchange="previewImage(this)">
+                                <div class="image-preview"></div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label><i class="fas fa-check-circle"></i> Đáp án đúng:</label>
-                    <input type="text" name="correct_answers[]" required>
+                    <div class="form-group">
+                        <label><i class="fas fa-tasks"></i> Loại câu hỏi:</label>
+                        <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
+                            <option value="multiple_choice">Trắc nghiệm</option>
+                            <option value="text">Điền đáp án</option>
+                        </select>
+                    </div>
+
+                    <div class="multiple-choice-options">
+                        <div class="form-group">
+                            <label><i class="fas fa-list"></i> Các lựa chọn:</label>
+                            <div class="options-grid">
+                                <div class="option-item">
+                                    <span class="option-label">A</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option1[]" placeholder="Lựa chọn A (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                                <div class="option-item">
+                                    <span class="option-label">B</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option2[]" placeholder="Lựa chọn B (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                                <div class="option-item">
+                                    <span class="option-label">C</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option3[]" placeholder="Lựa chọn C (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                                <div class="option-item">
+                                    <span class="option-label">D</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option4[]" placeholder="Lựa chọn D (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-check-circle"></i> Đáp án đúng:</label>
+                        <input type="text" name="correct_answers[]" required>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="addQuestion()">
-                <i class="fas fa-plus"></i> Thêm câu hỏi
-            </button>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Tạo bài kiểm tra
-            </button>
-        </div>
-    </form>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="addQuestion()">
+                    <i class="fas fa-plus"></i> Thêm câu hỏi
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Tạo bài kiểm tra
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <style>
 .create-quiz-container {
-    max-width: 1000px;
-    margin: 2rem auto;
+    max-width: 100%;
     padding: 0 1rem;
     border-radius: 20px;
-    padding-bottom: 30px;
+    background: none;
+    border: none;
+    box-shadow: none;
 }
-.create-quiz-container h1 {
-    font-family: 'Times New Roman', Times, serif;
-    color: #5a6fd6;
-    margin-bottom: 2rem;
-    text-align: center;
+.quiz-card {
+    background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+    border-radius: 32px;
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.13);
+    padding: 1.5rem 2rem 2rem 2rem;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
 }
 .page-header {
     text-align: center;
@@ -133,28 +203,62 @@
     padding: 30px 40px;
     display: flex;
     justify-content: center;
-    gap: 1rem;
+    gap: 0.5rem;
+    align-items: center;
 }
-
 .page-header i {
-    font-size: 2rem;
-    color: #667eea;
+    font-size: 2.2rem;
+    color: #4b6ecc;
 }
-
 .page-header h1 {
-    font-size: 1.8rem;
-    font-weight: 600;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text-color);
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #4b6ecc;
+    letter-spacing: 1px;
+    margin: 0;
+    text-shadow: 0 2px 12px #b1a0e540;
 }
-
 .form-section {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-    margin-bottom: 2rem;
+    background: #fff;
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px #f2f2f31a;
+    margin-bottom: 2.2rem;
     border: 2px solid #d1d5db;
 }
-
+.csv-upload-section {
+    background: #f8f9fd;
+    border: 2px solid #b1a0e5;
+    border-radius: 16px;
+    box-shadow: 0 3px 12px #5a6fd610;
+    padding: 1.5rem;
+}
+.csv-template-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    color: #4b6ecc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.csv-template-link:hover {
+    color: #40618b;
+}
+.csv-error {
+    background: #fef2f2;
+    color: #ef4444;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
 .form-section h2 {
     color: #4a5568;
     font-size: 1.3rem;
@@ -163,21 +267,19 @@
     align-items: center;
     gap: 0.5rem;
 }
-
 .form-section h2 i {
     color: #667eea;
 }
-
 .form-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
 }
-
 .form-group {
+    flex: 1 1 220px;
+    min-width: 220px;
     margin-bottom: 1.2rem;
 }
-
 .form-group label {
     display: flex;
     align-items: center;
@@ -186,46 +288,43 @@
     margin-bottom: 0.5rem;
     font-weight: 500;
 }
-
 .form-group label i {
     color: #667eea;
 }
-
 input[type="text"],
 input[type="number"],
 input[type="datetime-local"],
+input[type="file"],
 textarea,
 select {
     width: 100%;
-    padding: 0.6rem;
-    border: 2px solid #cbd5e0;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
+    padding: 0.8rem 1rem;
+    border: 2px solid #b1a0e5;
+    border-radius: 16px;
+    font-size: 1.05rem;
+    transition: all 0.2s;
+    background: #f8f9fd;
+    box-shadow: 0 2px 8px #5a6fd610;
 }
-
 input:focus,
 textarea:focus,
 select:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #5a6fd6;
+    box-shadow: 0 0 0 3px #b1a0e522;
 }
-
 textarea {
     min-height: 100px;
     resize: vertical;
 }
-
 .question-item {
-    background: white;
+    background: #f7f9fc;
     padding: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 3px 12px #5a6fd610;
     margin-bottom: 1.5rem;
     border: 2px solid #d1d5db;
 }
-
 .question-header {
     display: flex;
     align-items: center;
@@ -236,23 +335,37 @@ textarea {
     color: #4a5568;
     font-weight: 600;
 }
-
 .question-header i {
-    color: #667eea;
+    color: #1e7fda;
 }
-
+.question-header .btn-delete {
+    margin-left: auto;
+    background: #e60909;
+    color: #fafafa;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    max-width: 150px;
+    justify-content: center;
+    min-width: 100px;
+    border: 1px solid #ef4444;
+}
+.question-header .btn-delete:hover {
+    background: #ef4444;
+    color: #fff;
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
 .options-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
 }
-
 .option-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-
 .option-label {
     background: #667eea;
     color: white;
@@ -261,128 +374,505 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 8px;
     font-weight: 700;
     font-size: 1rem;
     border: 2px solid #5a6fd6;
 }
-
 .form-actions {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
     margin-top: 2rem;
 }
-
 .btn {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.2rem;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    font-weight: 500;
+    padding: 0.9rem 2.2rem;
+    border-radius: 25px;
+    font-size: 1.08rem;
+    font-weight: 700;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s;
+    border: none;
+    box-shadow: 0 2px 8px #5a6fd622;
 }
-
 .btn-primary {
-    background: #667eea;
+    background: linear-gradient(90deg, #6668df 60%, #169ab1 100%);
     color: white;
-    border-radius: 20px;
 }
-
 .btn-secondary {
-    background: white;
-    color: #fafafa;
-    border-radius: 20px;
+    background: #ede9fe;
+    color: #e9eaee !important;
 }
-
 .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 20px #5a6fd655;
 }
-
 .btn-primary:hover {
-    background: #5a6fd6;
+    background: linear-gradient(90deg, #436ee6 60%, #165e80 100%);
 }
-
 .btn-secondary:hover {
-    background: #f8fafc;
+    background: #5a6fd6;
+    color: #fff;
 }
-
-@media (max-width: 768px) {
-    .create-quiz-container {
-        margin: 1rem;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .options-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-    
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
 .checkbox-label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
 }
-
 .checkbox-label input[type="checkbox"] {
     width: 18px;
     height: 18px;
     margin: 0;
 }
-
 .checkbox-label span {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-
 .form-text {
     display: block;
     margin-top: 0.25rem;
     color: #718096;
     font-size: 0.875rem;
 }
+.editor-wrapper {
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+}
+.latex-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+.latex-btn {
+    padding: 0.3rem 0.6rem;
+    background-color: #ede9fe;
+    border: 1px solid #b1a0e5;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #5a6fd6;
+    font-weight: 600;
+}
+.latex-btn:hover {
+    background-color: #d1d5db;
+    color: #3d4fa3;
+}
+.math-editor {
+    min-height: 120px;
+    width: 100%;
+    padding: 0.8rem;
+    border: none;
+    font-family: monospace;
+    font-size: 1.05rem;
+    resize: vertical;
+    background: #f8f9fd;
+    border-radius: 8px;
+}
+.preview-area {
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    min-height: 60px;
+}
+.math-preview {
+    font-size: 0.95rem;
+    color: #4a5568;
+}
+.image-upload {
+    border-radius: 10px;
+    padding: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+.image-upload label {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background-color: #ffffff;
+    border: 1px solid #b1a0e5;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: #40618b;
+    font-weight: 600;
+}
+.image-upload label:hover {
+    background-color: #ede9fe;
+    color: #5a6fd6;
+}
+.image-upload input[type="file"] {
+    display: none;
+}
+.image-preview {
+    margin-top: 0.5rem;
+    max-width: 100%;
+}
+.image-preview img {
+    max-width: 300px;
+    max-height: 200px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+}
+.option-editor {
+    flex: 1;
+}
+.option-input {
+    min-height: 60px;
+    border-radius: 8px;
+    background: #f8f9fd;
+}
+@media (max-width: 900px) {
+    .quiz-card {
+        padding: 1.2rem 0.5rem;
+    }
+    .form-section {
+        padding: 1.2rem 0.5rem 1rem 0.5rem;
+    }
+}
+@media (max-width: 768px) {
+    .create-quiz-container {
+        margin: 1rem;
+    }
+    .quiz-card {
+        padding: 0.5rem 0.2rem;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .form-actions {
+        flex-direction: column;
+    }
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .latex-toolbar {
+        flex-wrap: wrap;
+    }
+}
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
 <script>
+// Wait for MathJax to load
+function waitForMathJax() {
+    return new Promise((resolve) => {
+        if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+            window.MathJax.startup.promise.then(() => resolve());
+        } else {
+            const mathJaxScript = document.querySelector('script[src*="mathjax"]');
+            if (mathJaxScript) {
+                mathJaxScript.addEventListener('load', () => resolve());
+            } else {
+                resolve();
+            }
+        }
+    });
+}
+
+// Configure MathJax
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    svg: { fontCache: 'global' }
+};
+
+// Parse CSV and populate questions
+function parseCSV(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const errorDiv = document.getElementById('csv-error');
+    const errorMessage = document.getElementById('csv-error-message');
+    errorDiv.style.display = 'none';
+
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            const data = results.data;
+            const expectedHeaders = ['Question', 'Correct Answer', 'Option A', 'Option B', 'Option C', 'Option D'];
+
+            // Validate CSV structure
+            if (!data.length) {
+                errorMessage.textContent = 'Lỗi: File CSV rỗng hoặc không có dữ liệu.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const actualHeaders = Object.keys(data[0]);
+            const missingHeaders = expectedHeaders.filter(header => 
+                !actualHeaders.some(actual => actual.trim().toLowerCase() === header.toLowerCase())
+            );
+
+            if (missingHeaders.length > 0) {
+                errorMessage.textContent = `Lỗi: Thiếu cột: ${missingHeaders.join(', ')}. Yêu cầu: ${expectedHeaders.join(', ')}.`;
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Clear all existing questions
+            const container = document.getElementById('questions-container');
+            const questionItems = container.querySelectorAll('.question-item');
+            questionItems.forEach(item => item.remove());
+
+            // Create exactly the number of questions from CSV
+            data.forEach((row, index) => {
+                const normalizedRow = {};
+                Object.keys(row).forEach(key => {
+                    const normalizedKey = expectedHeaders.find(header => 
+                        header.toLowerCase() === key.trim().toLowerCase()
+                    ) || key;
+                    normalizedRow[normalizedKey] = row[key];
+                });
+
+                // Create new question item
+                const questionCount = index + 1;
+                const newQuestion = document.createElement('div');
+                newQuestion.className = 'question-item';
+                newQuestion.innerHTML = `
+                    <div class="question-header">
+                        <i class="fas fa-list-ol"></i>
+                        <span>Câu hỏi ${questionCount}</span>
+                        <button type="button" class="btn btn-delete" onclick="deleteQuestion(this)">
+                            <i class="fas fa-trash"></i> Xóa câu hỏi
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>Nội dung câu hỏi:</label>
+                        <div class="editor-wrapper">
+                            <div class="latex-toolbar">
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\frac{a}{b}')">
+                                    <i class="fas fa-divide"></i> \\frac{a}{b}
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\sqrt{x}')">
+                                    <i class="fas fa-square-root-alt"></i> \\sqrt{x}
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\sum_{i=1}^{n}')">
+                                    <i class="fas fa-sigma"></i> \\sum
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, '\\int_{a}^{b}')">
+                                    <i class="fas fa-integral"></i> \\int
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, 'x^2')">
+                                    x<sup>2</sup>
+                                </button>
+                                <button type="button" class="latex-btn" onclick="insertLatex(this, 'x_i')">
+                                    x<sub>i</sub>
+                                </button>
+                            </div>
+                            <textarea class="math-editor" name="questions[]" required oninput="updatePreview(this)">${normalizedRow['Question'] || ''}</textarea>
+                            <div class="preview-area">
+                                <div class="math-preview">Xem trước LaTeX</div>
+                            </div>
+                            <div class="image-upload">
+                                <label for="question_image_${questionCount}"><i class="fas fa-image"></i> Thêm hình ảnh</label>
+                                <input type="file" id="question_image_${questionCount}" name="question_images[]" accept="image/*" onchange="previewImage(this)">
+                                <div class="image-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-tasks"></i> Loại câu hỏi:</label>
+                        <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
+                            <option value="multiple_choice" selected>Trắc nghiệm</option>
+                            <option value="text">Điền đáp án</option>
+                        </select>
+                    </div>
+                    <div class="multiple-choice-options">
+                        <div class="form-group">
+                            <label><i class="fas fa-list"></i> Các lựa chọn:</label>
+                            <div class="options-grid">
+                                <div class="option-item">
+                                    <span class="option-label">A</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option1[]" placeholder="Lựa chọn A (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)">${normalizedRow['Option A'] || ''}</textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                                <div class="option-item">
+                                    <span class="option-label">B</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option2[]" placeholder="Lựa chọn B (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)">${normalizedRow['Option B'] || ''}</textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                                <div class="option-item">
+                                    <span class="option-label">C</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option3[]" placeholder="Lựa chọn C (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)">${normalizedRow['Option C'] || ''}</textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                                <div class="option-item">
+                                    <span class="option-label">D</span>
+                                    <div class="option-editor">
+                                        <textarea class="math-editor option-input markdown-option" name="option4[]" placeholder="Lựa chọn D (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)">${normalizedRow['Option D'] || ''}</textarea>
+                                        <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-check-circle"></i> Đáp án đúng:</label>
+                        <input type="text" name="correct_answers[]" required value="${normalizedRow['Correct Answer'] || ''}">
+                    </div>
+                `;
+                container.appendChild(newQuestion);
+
+                // Initialize question
+                const select = newQuestion.querySelector('.question-type');
+                toggleAnswerType(select);
+                const editors = newQuestion.querySelectorAll('.math-editor');
+                editors.forEach(editor => {
+                    editor.addEventListener('input', function() {
+                        updatePreview(this);
+                    });
+                    updatePreview(editor);
+                });
+                const optionInputs = newQuestion.querySelectorAll('.markdown-option');
+                optionInputs.forEach(input => {
+                    input.addEventListener('input', function() {
+                        updateOptionPreview(this);
+                    });
+                    updateOptionPreview(input);
+                });
+            });
+
+            // Update question numbers
+            updateQuestionNumbers();
+        },
+        error: function(error) {
+            errorMessage.textContent = 'Lỗi: Không thể đọc file CSV. Vui lòng kiểm tra định dạng.';
+            errorDiv.style.display = 'block';
+            console.error('CSV parsing error:', error);
+        }
+    });
+}
+
+// Insert LaTeX into editor
+function insertLatex(button, latexCode) {
+    const editor = button.closest('.editor-wrapper').querySelector('.math-editor');
+    const startPos = editor.selectionStart;
+    const endPos = editor.selectionEnd;
+    const text = editor.value;
+    
+    const insertText = '$' + latexCode + '$';
+    
+    editor.value = text.substring(0, startPos) + insertText + text.substring(endPos);
+    editor.focus();
+    editor.selectionStart = startPos + insertText.length;
+    editor.selectionEnd = startPos + insertText.length;
+    
+    updatePreview(editor);
+}
+
+// Update LaTeX preview
+async function updatePreview(editor) {
+    const previewArea = editor.closest('.editor-wrapper').querySelector('.math-preview');
+    previewArea.innerHTML = marked.parse(editor.value || 'Xem trước LaTeX/Markdown');
+    
+    await waitForMathJax();
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        try {
+            await window.MathJax.typesetPromise([previewArea]);
+        } catch (err) {
+            console.error('MathJax typesetting failed:', err);
+            previewArea.innerHTML += '<span style="color: red;"> (LaTeX rendering failed)</span>';
+        }
+    } else {
+        console.warn('MathJax.typesetPromise is not available');
+        previewArea.innerHTML += '<span style="color: red;"> (LaTeX not rendered)</span>';
+    }
+}
+
+// Preview uploaded image
+function previewImage(input) {
+    const previewArea = input.parentElement.querySelector('.image-preview');
+    previewArea.innerHTML = '';
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            previewArea.appendChild(img);
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Toggle answer type
 function toggleAnswerType(select) {
     const questionItem = select.closest('.question-item');
     const multipleChoiceOptions = questionItem.querySelector('.multiple-choice-options');
-    const correctAnswerInput = questionItem.querySelector('input[name="correct_answers[]"]');
     
     if (select.value === 'multiple_choice') {
         multipleChoiceOptions.style.display = 'block';
-        // Bắt buộc các trường lựa chọn
-        multipleChoiceOptions.querySelectorAll('input[type="text"]').forEach(input => {
+        multipleChoiceOptions.querySelectorAll('.option-input').forEach(input => {
             input.required = true;
         });
     } else {
         multipleChoiceOptions.style.display = 'none';
-        // Bỏ bắt buộc các trường lựa chọn
-        multipleChoiceOptions.querySelectorAll('input[type="text"]').forEach(input => {
+        multipleChoiceOptions.querySelectorAll('.option-input').forEach(input => {
             input.required = false;
         });
     }
 }
 
-function addQuestion() {
+// Update question numbers
+function updateQuestionNumbers() {
+    const container = document.getElementById('questions-container');
+    const questionItems = container.querySelectorAll('.question-item');
+    questionItems.forEach((item, index) => {
+        const header = item.querySelector('.question-header span');
+        header.textContent = `Câu hỏi ${index + 1}`;
+        const imageInput = item.querySelector('input[type="file"]');
+        if (imageInput) {
+            imageInput.id = `question_image_${index + 1}`;
+            const label = item.querySelector('.image-upload label');
+            if (label) {
+                label.setAttribute('for', `question_image_${index + 1}`);
+            }
+        }
+    });
+}
+
+// Delete question
+function deleteQuestion(button) {
+    const container = document.getElementById('questions-container');
+    const questionItems = container.querySelectorAll('.question-item');
+    if (questionItems.length <= 1) {
+        alert('Không thể xóa câu hỏi cuối cùng. Phải có ít nhất một câu hỏi.');
+        return;
+    }
+    const questionItem = button.closest('.question-item');
+    questionItem.remove();
+    updateQuestionNumbers();
+}
+
+// Add new question
+async function addQuestion() {
     const container = document.getElementById('questions-container');
     const questionCount = container.querySelectorAll('.question-item').length + 1;
     
@@ -392,13 +882,44 @@ function addQuestion() {
         <div class="question-header">
             <i class="fas fa-list-ol"></i>
             <span>Câu hỏi ${questionCount}</span>
+            <button type="button" class="btn btn-delete" onclick="deleteQuestion(this)">
+                <i class="fas fa-trash"></i> Xóa câu hỏi
+            </button>
         </div>
-
         <div class="form-group">
             <label>Nội dung câu hỏi:</label>
-            <textarea name="questions[]" required></textarea>
+            <div class="editor-wrapper">
+                <div class="latex-toolbar">
+                    <button type="button" class="latex-btn" onclick="insertLatex(this, '\\frac{a}{b}')">
+                        <i class="fas fa-divide"></i> \\frac{a}{b}
+                    </button>
+                    <button type="button" class="latex-btn" onclick="insertLatex(this, '\\sqrt{x}')">
+                        <i class="fas fa-square-root-alt"></i> \\sqrt{x}
+                    </button>
+                    <button type="button" class="latex-btn" onclick="insertLatex(this, '\\sum_{i=1}^{n}')">
+                        <i class="fas fa-sigma"></i> \\sum
+                    </button>
+                    <button type="button" class="latex-btn" onclick="insertLatex(this, '\\int_{a}^{b}')">
+                        <i class="fas fa-integral"></i> \\int
+                    </button>
+                    <button type="button" class="latex-btn" onclick="insertLatex(this, 'x^2')">
+                        x<sup>2</sup>
+                    </button>
+                    <button type="button" class="latex-btn" onclick="insertLatex(this, 'x_i')">
+                        x<sub>i</sub>
+                    </button>
+                </div>
+                <textarea class="math-editor" name="questions[]" required oninput="updatePreview(this)"></textarea>
+                <div class="preview-area">
+                    <div class="math-preview">Xem trước LaTeX</div>
+                </div>
+                <div class="image-upload">
+                    <label for="question_image_${questionCount}"><i class="fas fa-image"></i> Thêm hình ảnh</label>
+                    <input type="file" id="question_image_${questionCount}" name="question_images[]" accept="image/*" onchange="previewImage(this)">
+                    <div class="image-preview"></div>
+                </div>
+            </div>
         </div>
-
         <div class="form-group">
             <label><i class="fas fa-tasks"></i> Loại câu hỏi:</label>
             <select name="question_types[]" class="question-type" onchange="toggleAnswerType(this)">
@@ -406,31 +927,41 @@ function addQuestion() {
                 <option value="text">Điền đáp án</option>
             </select>
         </div>
-
         <div class="multiple-choice-options">
             <div class="form-group">
                 <label><i class="fas fa-list"></i> Các lựa chọn:</label>
                 <div class="options-grid">
                     <div class="option-item">
                         <span class="option-label">A</span>
-                        <input type="text" name="option1[]" placeholder="Lựa chọn A" required>
+                        <div class="option-editor">
+                            <textarea class="math-editor option-input markdown-option" name="option1[]" placeholder="Lựa chọn A (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                            <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                        </div>
                     </div>
                     <div class="option-item">
                         <span class="option-label">B</span>
-                        <input type="text" name="option2[]" placeholder="Lựa chọn B" required>
+                        <div class="option-editor">
+                            <textarea class="math-editor option-input markdown-option" name="option2[]" placeholder="Lựa chọn B (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                            <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                        </div>
                     </div>
                     <div class="option-item">
                         <span class="option-label">C</span>
-                        <input type="text" name="option3[]" placeholder="Lựa chọn C" required>
+                        <div class="option-editor">
+                            <textarea class="math-editor option-input markdown-option" name="option3[]" placeholder="Lựa chọn C (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                            <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                        </div>
                     </div>
                     <div class="option-item">
                         <span class="option-label">D</span>
-                        <input type="text" name="option4[]" placeholder="Lựa chọn D" required>
+                        <div class="option-editor">
+                            <textarea class="math-editor option-input markdown-option" name="option4[]" placeholder="Lựa chọn D (Markdown hỗ trợ)" required oninput="updateOptionPreview(this)"></textarea>
+                            <div class="option-preview markdown-preview">Xem trước Markdown</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
         <div class="form-group">
             <label><i class="fas fa-check-circle"></i> Đáp án đúng:</label>
             <input type="text" name="correct_answers[]" required>
@@ -438,14 +969,77 @@ function addQuestion() {
     `;
     
     container.appendChild(newQuestion);
+    
+    const select = newQuestion.querySelector('.question-type');
+    toggleAnswerType(select);
+    
+    const editors = newQuestion.querySelectorAll('.math-editor');
+    editors.forEach(editor => {
+        editor.addEventListener('input', function() {
+            updatePreview(this);
+        });
+    });
+    
+    const optionInputs = newQuestion.querySelectorAll('.markdown-option');
+    optionInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateOptionPreview(this);
+        });
+        updateOptionPreview(input);
+    });
+
+    // Update question numbers
+    updateQuestionNumbers();
 }
 
-// Khởi tạo trạng thái ban đầu cho câu hỏi đầu tiên
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize state
+document.addEventListener('DOMContentLoaded', async function() {
+    await waitForMathJax();
+    
     const firstQuestionType = document.querySelector('.question-type');
     if (firstQuestionType) {
         toggleAnswerType(firstQuestionType);
     }
+    
+    const editors = document.querySelectorAll('.math-editor');
+    editors.forEach(editor => {
+        editor.addEventListener('input', function() {
+            updatePreview(this);
+        });
+        updatePreview(editor);
+    });
+    
+    const optionInputs = document.querySelectorAll('.markdown-option');
+    optionInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updateOptionPreview(this);
+        });
+        updateOptionPreview(input);
+    });
+
+    // Update question numbers on load
+    updateQuestionNumbers();
 });
+
+// Update Markdown preview
+async function updateOptionPreview(textarea) {
+    const preview = textarea.parentElement.querySelector('.markdown-preview');
+    if (preview) {
+        preview.innerHTML = marked.parse(textarea.value || 'Xem trước Markdown');
+        await waitForMathJax();
+        if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+            try {
+                await window.MathJax.typesetPromise([preview]);
+            } catch (err) {
+                console.error('MathJax typesetting failed:', err);
+                preview.innerHTML += '<span style="color: red;"> (LaTeX rendering failed)</span>';
+            }
+        } else {
+            console.warn('MathJax.typesetPromise is not available');
+            preview.innerHTML += '<span style="color: red;"> (LaTeX not rendered)</span>';
+        }
+    }
+}
 </script>
-{% endblock %} 
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+{% endblock %}
