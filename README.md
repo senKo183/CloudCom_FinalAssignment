@@ -43,11 +43,14 @@
 ### 3.1. Phân tích yêu cầu
 [Viết các yêu cầu chức năng và phi chức năng của hệ thống.]
 - Các yêu cầu chức năng:
-  - [Chức năng 1]
-  - [Chức năng 2]
-- Các yeu cầu phi chức năng:
-  - [Yêu cầu 1]
-  - [Yêu cầu 2]
+  + Người dùng có thể đăng nhập/đăng kí.   
+  + Giáo viên có thể tạo bài kiểm tra với công thức toán học viết bằng LaTex.  
+  + Học sinh làm bài trắc nghiệm và nhận kết quả sau khi làm bài xong.  
+  + Chấm điểm tự động.
+    
+- Các yêu cầu phi chức năng:
+  + Giao diện đơn giản và dễ sử dụng.
+  + Hiển thị đúng các công thức toán học.
 
 ### 3.2. Đặc tả yêu cầu
 [Viết chi tiết các yêu cầu chức năng và phi chức năng, có thể sử dụng sơ đồ hoặc bảng biểu để minh họa.]
@@ -157,8 +160,15 @@
 ### 7.3. Hướng phát triển (optional)
 [Bạn có muốn phát triển tiếp đề tài này hay không? Nếu có, hãy viết rõ hướng phát triển tiếp theo của đề tài.]
 
+Hướng phát triển ứng dụng MathQuiz trong tương lai:  
+  ●	Tích hợp AI chấm tự luận.  
+  ●	Gợi ý học phần yếu cần luyện tập (theo lịch sử bài làm).  
+  ●	Tích hợp live quiz hoặc thi đấu giữa các học sinh.    
+  ●	Phát hành phiên bản mobile (React Native).   
+  ●	 Hệ thống phòng thi bảo mật, chống gian lận (camera, giới hạn tab…).  
+
 ## 8. TÀI LIỆU THAM KHẢO
-- [Tài liệu 1]
-- [Tài liệu 2]
+- [https://github.com/thepasterover/flask-quiz-app]
+- [https://flask.palletsprojects.com/en/stable/]
 - [https://flutter.dev]
 - [https://dart.dev]
