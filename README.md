@@ -115,20 +115,9 @@
 
 ### 🔹 Bước 5: Triển khai ứng dụng cục bộ
 
-* Cài đặt thư viện bằng `pip install -r requirements.txt`
-* Chạy ứng dụng bằng `python app.py`
-* Truy cập qua `http://localhost:5000`
-
----
-
-### 🔹 Bước 6: Triển khai ứng dụng.
-
-* Triển khai ứng dụng bằng Docker
----
-
 - **Cách thức cài đặt:**   
-  + Yêu cầu: Phiên bản `python` dưới **3.13** (khuyến khích sử dụng phiên bản 3.10, 3.11, 3.12)
-  + **Hướng dẫn cài đặt:**  
+  + Yêu cầu: Phiên bản `python` dưới **3.13** (khuyến khích sử dụng phiên bản 3.10, 3.11, 3.12)  
+  + **Hướng dẫn cài đặt:**    
     **Kích hoạt môi trường ảo:**
     ```
     python -m venv venv
@@ -142,6 +131,15 @@
     ```
     python app.py
     ```
+
+---
+
+### 🔹 Bước 6: Triển khai ứng dụng.
+
+* Triển khai ứng dụng bằng Docker
+* Truy cập Quizapp qua đường link: https://python-quiz-app-303799271660.asia-east1.run.app/ 
+
+
 ## 6. KIỂM THỬ
 - Thực hiện kiểm thử chức năng (Functional Testing)
 - Kiểm thử hiệu năng (Performance Testing)
