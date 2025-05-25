@@ -1084,7 +1084,8 @@ def main():
     with app.app_context():
         # Chỉ tạo bảng nếu chưa tồn tại
         db.create_all()
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 8080)) # Lấy cổng từ biến môi trường PORT, mặc định là 8080
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 
 if __name__ == "__main__":
