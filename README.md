@@ -4,7 +4,7 @@
 ## 1. MÔ TẢ ĐỀ TÀI
 
 ### 1.1. Mô tả tổng quan
-[Viết ý tưởng thực hiện đề tài, các vấn đề cần giải quyết và lý do chọn đề tài.]  
+
 - **Ý tưởng thực hiện:**  
   Trong bối cảnh chuyển đổi số trong giáo dục, việc ứng dụng công nghệ vào dạy và học ngày càng trở nên cần thiết. Một trong những nhu cầu cấp thiết là xây dựng một nền tảng kiểm tra trực tuyến thân thiện, dễ sử dụng, đặc biệt hỗ trợ cho việc kiểm tra kiến thức các môn học có nhiều công thức như Toán học.  
   Từ thực tế đó, nhóm em đề xuất xây dựng một ứng dụng web có tên là Quiz App, cho phép giáo viên tạo đề kiểm tra, nhập các câu hỏi có chứa công thức toán (hỗ trợ LaTeX), và học sinh có thể làm bài trực tiếp trên giao diện đơn giản, dễ tiếp cận.  
