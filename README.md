@@ -64,3 +64,7 @@
 ## 4. Link video
 
 ## 5. Screenshots
+
+### Giao diện trang chủ
+#### Giáo viên
+![Giao diện chính](images/home.png)
