@@ -67,4 +67,4 @@
 
 ### Giao diện trang chủ
 #### Giáo viên
-![Giao diện chính](images/home.png)
+![Giao diện chính](image/home.png)
