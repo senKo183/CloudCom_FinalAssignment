@@ -34,10 +34,12 @@
   
 ## 2. THÔNG TIN NHÓM
 
-- [Lê Hà Tú My] - [lehatmy@gmail.com]
-- [Nguyễn Quang Mạnh] - [nguyenquangmanh120304@gmail.com]
-- [Phạm Thị Ngọc Hương] - [pvnhuong2405@gmail.com]
-- [Nguyễn Thanh Tường Vy] - [nvy2902@gmail.com]
+| Họ và tên               | Gmail                           |
+|------------------------|----------------------------------|
+| Lê Hà Tú My            | lehatmy@gmail.com                |
+| Nguyễn Quang Mạnh      | nguyenquangmanh120304@gmail.com |
+| Phạm Thị Ngọc Hương    | pvnhuong2405@gmail.com           |
+| Nguyễn Thanh Tường Vy  | nvy2902@gmail.com                |
 
 ## 3. Hướng dẫn cài đặt hoặc sử dụng
 
