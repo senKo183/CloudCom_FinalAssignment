@@ -61,23 +61,29 @@
     ```
 
 * Triển khai ứng dụng : đóng gói bằng Docker và deploy ứng dụng lên Cloud Run
-* Truy cập Quizapp qua đường link: https://python-quiz-app-303799271660.asia-east1.run.app/ 
+* Truy cập MathQuiz qua đường link: https://python-quiz-app-303799271660.asia-east1.run.app/ 
 
 ## 4. Link video
 
 ## 5. Screenshots
 
 ### Giao diện trang chủ
-#### Giao diện giáo viên – Tạo bài kiểm tra
 ![Giao diện chính](image/home.png)
+![Giao diện chính](image/student_home.png)
+
+#### Giao diện giáo viên – Tạo bài kiểm tra
 ![](image/create_quiz.png)
 ![](image/create_quiz2.png)
 ![](image/create_quiz3.png)
 ![G](image/create_quiz4.png)
-![G](image/.png)
 #### Giao diện học sinh – Làm bài kiểm tra
-![Giao diện chính](image/student_home.png)
+![](image/view_quiz.png)
+#### Giao diện quản lý bài kiểm tra
 ![Giao diện dashboard](image/manage_quiz.png)
+![](image/manage_quiz2.png)
 #### Giao diện xem kết quả
 ![](image/results_after.png)
+#### Lịch sử các bài kiểm tra
+![](image/history_teacher.png)
 
+© 2025 MathQuiz - Nền tảng kiểm tra toán học trực tuyến
