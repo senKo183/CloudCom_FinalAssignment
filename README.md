@@ -1,5 +1,5 @@
 #   QUIZ APP
-![Giao diện chính](static/MathQuiz-logo.png)
+<img src="static/MathQuiz-logo.png" alt="Giao diện chính" width="200">
 
 ## 1. MÔ TẢ ĐỀ TÀI
 
