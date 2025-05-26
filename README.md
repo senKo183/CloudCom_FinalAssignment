@@ -1,4 +1,6 @@
 #   QUIZ APP
+***MATHQUIZ - Ứng dụng tạo và làm bài kiểm tra toán học***
+
 <img src="static/MathQuiz-logo.png" alt="Giao diện chính" width="200">
 
 ## 1. MÔ TẢ ĐỀ TÀI
