@@ -66,5 +66,10 @@
 ## 5. Screenshots
 
 ### Giao diện trang chủ
-#### Giáo viên
-![Giao diện chính](image/home.png)
+#### Giao diện giáo viên – Tạo bài kiểm tra
+<p float="left">
+  <img src="images/home.png" width="45%" />
+  <img src="images/create_quiz.png" width="45%" />
+</p>
+#### Học sinh
+![Giao diện chính](image/student_home.png)
