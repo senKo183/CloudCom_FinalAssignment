@@ -72,9 +72,10 @@
 ![](image/create_quiz2.png)
 ![](image/create_quiz3.png)
 ![G](image/create_quiz4.png)
+![G](image/.png)
 #### Giao diện học sinh – Làm bài kiểm tra
 ![Giao diện chính](image/student_home.png)
-![](image/view_quiz.png)
+![Giao diện dashboard](image/manage_quiz.png)
 #### Giao diện xem kết quả
 ![](image/results_after.png)
 
