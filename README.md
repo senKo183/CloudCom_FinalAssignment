@@ -73,18 +73,25 @@
 ![Giao diện chính](image/home.png)
 ![Giao diện chính](image/student_home.png)
 
+#### Giao diện Đăng nhập/Đăng ký
+![Login](image/login.png)
+![Sign Up](image/signup.png)
+
 #### Giao diện giáo viên – Tạo bài kiểm tra
 ![](image/create_quiz.png)
 ![](image/create_quiz2.png)
 ![](image/create_quiz3.png)
 ![G](image/create_quiz4.png)
+
 #### Giao diện học sinh – Làm bài kiểm tra
-![](image/view_quiz.png)
+![](/image/lambai.png)
+![](/image/ketqua.png)
+
 #### Giao diện quản lý bài kiểm tra
 ![Giao diện dashboard](image/manage_quiz.png)
 ![](image/manage_quiz2.png)
-#### Giao diện xem kết quả
-![](image/results_after.png)
+![Giao diện dashboard](image/teacher_dashboard.png)
+
 #### Lịch sử các bài kiểm tra
 ![](image/history_teacher.png)
 
