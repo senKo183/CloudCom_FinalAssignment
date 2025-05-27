@@ -149,6 +149,9 @@ def register():
             email = request.form['email']
             username = request.form['username']
             password = request.form['password']
+            if len(password) < 6:
+                flash('Mật khẩu phải có ít nhất 6 ký tự!', 'error')
+                return redirect(url_for('register'))
             role = request.form['role']
 
             # Kiểm tra username và email đã tồn tại
@@ -160,6 +163,12 @@ def register():
                 return redirect(url_for('register'))
             if existing_email:
                 flash('Email đã được sử dụng. Vui lòng dùng email khác!', 'error')
+                return redirect(url_for('register'))
+
+            # Chỉ cho phép email dạng chuẩn, không Unicode, không ký tự đặc biệt ngoài @._-
+            email_pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+            if not re.match(email_pattern, email):
+                flash('Email không hợp lệ! Chỉ cho phép ký tự a-z, 0-9, @, ., _, - và không dấu.', 'error')
                 return redirect(url_for('register'))
 
             # Mã hóa mật khẩu
@@ -261,6 +270,9 @@ def create_quiz():
             title = request.form['title']
             start_time = datetime.strptime(request.form['start_time'], '%Y-%m-%dT%H:%M')
             end_time = datetime.strptime(request.form['end_time'], '%Y-%m-%dT%H:%M')
+            if end_time <= start_time:
+                flash('Thời gian kết thúc phải sau thời gian bắt đầu!', 'danger')
+                return redirect(url_for('create_quiz'))
             duration = int(request.form['duration'])
             #max_attempts = request.form.get('max_attempts')  # Lấy giá trị max_attempts từ form
             #is_public = request.form.get('is_public') == 'on'  # Lấy giá trị is_public từ form
@@ -425,6 +437,9 @@ def edit_quiz(quiz_id):
             quiz.title = request.form['title']
             quiz.start_time = datetime.strptime(request.form['start_time'], '%Y-%m-%dT%H:%M')
             quiz.end_time = datetime.strptime(request.form['end_time'], '%Y-%m-%dT%H:%M')
+            if quiz.end_time <= quiz.start_time:
+                flash('Thời gian kết thúc phải sau thời gian bắt đầu!', 'danger')
+                return redirect(url_for('edit_quiz', quiz_id=quiz.id))
             quiz.duration = int(request.form['duration'])
             quiz.max_attempts = int(request.form['max_attempts']) if request.form['max_attempts'] else None
             
