@@ -64,8 +64,6 @@
 
 * Triển khai ứng dụng : đóng gói bằng Docker và deploy ứng dụng lên Cloud Run
 * Truy cập MathQuiz qua đường link: https://python-quiz-app-303799271660.asia-east1.run.app/ 
-### DATABASE
-![](image/CSDL.png)
 
 ## 4. Link video: https://drive.google.com/file/d/13xmox09DEfdwN9OkpUQaw_I3IKfHlZw3/view?usp=sharing
 ## 5. Screenshots
