@@ -14,15 +14,27 @@ import string
 import re
 from werkzeug.utils import secure_filename
 
+# Import cho chatbot
+from langchain_community.llms import CTransformers
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
+from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
+import uuid
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mathquiz.db'
 # Cấu hình upload
 UPLOAD_FOLDER = 'static/uploads/question_images'
+CHATBOT_UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+PDF_EXTENSIONS = {'pdf'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['CHATBOT_UPLOAD_FOLDER'] = CHATBOT_UPLOAD_FOLDER
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -106,6 +118,30 @@ class StudentAnswer(db.Model):
     quiz = db.relationship('Quiz', backref='student_answers', lazy=True)
     student = db.relationship('User', backref='student_answers', lazy=True)
     question = db.relationship('Question', backref='student_answers', lazy=True)
+
+class ChatDocument(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
+    vector_db_path = db.Column(db.String(500), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    session_id = db.Column(db.String(100), unique=True, nullable=False)
+    
+    user = db.relationship('User', backref='chat_documents', lazy=True)
+
+class ChatMessage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    document_id = db.Column(db.Integer, db.ForeignKey('chat_document.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    answer = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    document = db.relationship('ChatDocument', backref='messages', lazy=True)
+    user = db.relationship('User', backref='chat_messages', lazy=True)
+
 def init_db():
     with app.app_context():
         # Drop all tables
@@ -253,6 +289,68 @@ def generate_quiz_code():
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def allowed_pdf_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in PDF_EXTENSIONS
+
+# Chatbot helper functions
+def load_llm():
+    model_file = "models/vinallama-7b-chat_q5_0.gguf"
+    llm = CTransformers(
+        model=model_file,
+        model_type="llama",
+        max_new_tokens=1024,
+        temperature=0.01
+    )
+    return llm
+
+def create_prompt():
+    template = """<|im_start|>system\nSử dụng thông tin sau đây để trả lời câu hỏi. Nếu bạn không biết câu trả lời, hãy nói không biết, đừng cố tạo ra câu trả lời\n
+    {context}<|im_end|>\n<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant"""
+    prompt = PromptTemplate(template=template, input_variables=["context", "question"])
+    return prompt
+
+def create_qa_chain(prompt, llm, db):
+    llm_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=db.as_retriever(search_kwargs={"k": 3}, max_tokens_limit=1024),
+        return_source_documents=False,
+        chain_type_kwargs={'prompt': prompt}
+    )
+    return llm_chain
+
+def create_vector_db_from_pdf(pdf_path, vector_db_path):
+    try:
+        # Load PDF
+        loader = PyPDFLoader(pdf_path)
+        documents = loader.load()
+        
+        # Split text
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
+        chunks = text_splitter.split_documents(documents)
+        
+        # Create embeddings
+        embedding_model = GPT4AllEmbeddings(model_file="models/all-MiniLM-L6-v2-f16.gguf")
+        
+        # Create vector database
+        db = FAISS.from_documents(chunks, embedding_model)
+        db.save_local(vector_db_path)
+        
+        return True
+    except Exception as e:
+        print(f"Error creating vector database: {e}")
+        return False
+
+def load_vector_db(vector_db_path):
+    try:
+        embedding_model = GPT4AllEmbeddings(model_file="models/all-MiniLM-L6-v2-f16.gguf")
+        db = FAISS.load_local(vector_db_path, embedding_model, allow_dangerous_deserialization=True)
+        return db
+    except Exception as e:
+        print(f"Error loading vector database: {e}")
+        return None
 
 @app.route('/create_quiz', methods=['GET', 'POST'])
 def create_quiz():
@@ -1094,6 +1192,166 @@ def review_result(result_id):
         ))
 
     return render_template('results_after.html', quiz=quiz, score=score, results=results)
+
+# Chatbot routes
+@app.route('/chatbot')
+def chatbot():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_documents = ChatDocument.query.filter_by(user_id=session['user_id']).order_by(ChatDocument.uploaded_at.desc()).all()
+    return render_template('chatbot.html', documents=user_documents)
+
+@app.route('/chatbot/upload', methods=['POST'])
+def upload_document():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if 'file' not in request.files:
+        flash('Không có file nào được chọn!', 'error')
+        return redirect(url_for('chatbot'))
+    
+    file = request.files['file']
+    if file.filename == '':
+        flash('Không có file nào được chọn!', 'error')
+        return redirect(url_for('chatbot'))
+    
+    if file and allowed_pdf_file(file.filename):
+        # Generate unique session ID
+        session_id = str(uuid.uuid4())
+        
+        # Secure filename
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"{timestamp}_{filename}"
+        
+        # Save file
+        file_path = os.path.join(app.config['CHATBOT_UPLOAD_FOLDER'], unique_filename)
+        os.makedirs(app.config['CHATBOT_UPLOAD_FOLDER'], exist_ok=True)
+        file.save(file_path)
+        
+        # Create vector database
+        vector_db_path = os.path.join('vectorstores', f'db_{session_id}')
+        
+        if create_vector_db_from_pdf(file_path, vector_db_path):
+            # Save to database
+            chat_document = ChatDocument(
+                user_id=session['user_id'],
+                filename=unique_filename,
+                original_filename=filename,
+                file_path=file_path,
+                vector_db_path=vector_db_path,
+                session_id=session_id
+            )
+            db.session.add(chat_document)
+            db.session.commit()
+            
+            flash('Tài liệu đã được upload và xử lý thành công!', 'success')
+            return redirect(url_for('chat_session', session_id=session_id))
+        else:
+            # Remove file if vector database creation failed
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            flash('Có lỗi xảy ra khi xử lý tài liệu!', 'error')
+    else:
+        flash('Chỉ chấp nhận file PDF!', 'error')
+    
+    return redirect(url_for('chatbot'))
+
+@app.route('/chatbot/session/<session_id>')
+def chat_session(session_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    document = ChatDocument.query.filter_by(session_id=session_id, user_id=session['user_id']).first()
+    if not document:
+        flash('Không tìm thấy tài liệu!', 'error')
+        return redirect(url_for('chatbot'))
+    
+    messages = ChatMessage.query.filter_by(document_id=document.id).order_by(ChatMessage.created_at.asc()).all()
+    return render_template('chat_session.html', document=document, messages=messages)
+
+@app.route('/chatbot/ask', methods=['POST'])
+def ask_question():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.get_json()
+    question = data.get('question')
+    session_id = data.get('session_id')
+    
+    if not question or not session_id:
+        return jsonify({'error': 'Missing question or session_id'}), 400
+    
+    document = ChatDocument.query.filter_by(session_id=session_id, user_id=session['user_id']).first()
+    if not document:
+        return jsonify({'error': 'Document not found'}), 404
+    
+    try:
+        # Load vector database
+        db_vector = load_vector_db(document.vector_db_path)
+        if not db_vector:
+            return jsonify({'error': 'Error loading knowledge base'}), 500
+        
+        # Load LLM and create chain
+        llm = load_llm()
+        prompt = create_prompt()
+        qa_chain = create_qa_chain(prompt, llm, db_vector)
+        
+        # Get answer
+        response = qa_chain.invoke({"query": question})
+        answer = response.get('result', 'Xin lỗi, tôi không thể trả lời câu hỏi này.')
+        
+        # Save to database
+        chat_message = ChatMessage(
+            document_id=document.id,
+            user_id=session['user_id'],
+            question=question,
+            answer=answer
+        )
+        db.session.add(chat_message)
+        db.session.commit()
+        
+        return jsonify({
+            'question': question,
+            'answer': answer,
+            'timestamp': chat_message.created_at.strftime('%H:%M:%S')
+        })
+        
+    except Exception as e:
+        print(f"Error processing question: {e}")
+        return jsonify({'error': 'Error processing your question'}), 500
+
+@app.route('/chatbot/delete/<session_id>')
+def delete_document(session_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    document = ChatDocument.query.filter_by(session_id=session_id, user_id=session['user_id']).first()
+    if not document:
+        flash('Không tìm thấy tài liệu!', 'error')
+        return redirect(url_for('chatbot'))
+    
+    try:
+        # Delete file
+        if os.path.exists(document.file_path):
+            os.remove(document.file_path)
+        
+        # Delete vector database directory
+        import shutil
+        if os.path.exists(document.vector_db_path):
+            shutil.rmtree(document.vector_db_path)
+        
+        # Delete from database
+        ChatMessage.query.filter_by(document_id=document.id).delete()
+        db.session.delete(document)
+        db.session.commit()
+        
+        flash('Tài liệu đã được xóa thành công!', 'success')
+    except Exception as e:
+        flash('Có lỗi xảy ra khi xóa tài liệu!', 'error')
+    
+    return redirect(url_for('chatbot'))
 
 def main():
     with app.app_context():

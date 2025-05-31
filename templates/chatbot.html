@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}Chatbot AI{% endblock %}
+
+{% block content %}
+<div class="chatbot-container">
+    <div class="chatbot-header">
+        <h1><i class="fas fa-robot"></i> Chatbot AI với Knowledge Base</h1>
+        <p>Upload tài liệu PDF để tạo knowledge base và trò chuyện với AI về nội dung tài liệu</p>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+        <div class="upload-card">
+            <h3><i class="fas fa-upload"></i> Upload Tài Liệu PDF</h3>
+            <form action="{{ url_for('upload_document') }}" method="post" enctype="multipart/form-data" class="upload-form">
+                <div class="file-input-wrapper">
+                    <input type="file" id="pdf-file" name="file" accept=".pdf" required>
+                    <label for="pdf-file" class="file-input-label">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Chọn file PDF...</span>
+                    </label>
+                </div>
+                <button type="submit" class="upload-btn">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Upload và Tạo Knowledge Base
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Documents List -->
+    {% if documents %}
+    <div class="documents-section">
+        <h3><i class="fas fa-folder"></i> Tài Liệu Đã Upload</h3>
+        <div class="documents-grid">
+            {% for doc in documents %}
+            <div class="document-card">
+                <div class="doc-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="doc-info">
+                    <h4>{{ doc.original_filename }}</h4>
+                    <p class="doc-date">
+                        <i class="fas fa-calendar"></i>
+                        {{ doc.uploaded_at.strftime('%d/%m/%Y %H:%M') }}
+                    </p>
+                    <div class="doc-actions">
+                        <a href="{{ url_for('chat_session', session_id=doc.session_id) }}" class="btn-chat">
+                            <i class="fas fa-comments"></i>
+                            Trò chuyện
+                        </a>
+                        <a href="{{ url_for('delete_document', session_id=doc.session_id) }}" 
+                           class="btn-delete" 
+                           onclick="return confirm('Bạn có chắc muốn xóa tài liệu này?')">
+                            <i class="fas fa-trash"></i>
+                            Xóa
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-file-upload"></i>
+        <h3>Chưa có tài liệu nào</h3>
+        <p>Upload file PDF đầu tiên để bắt đầu trò chuyện với AI</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.chatbot-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.chatbot-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.chatbot-header h1 {
+    color: #5a6fd6;
+    margin-bottom: 0.5rem;
+}
+
+.chatbot-header p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.upload-section {
+    margin-bottom: 3rem;
+}
+
+.upload-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.upload-card h3 {
+    margin-bottom: 1.5rem;
+}
+
+.upload-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.file-input-wrapper {
+    position: relative;
+}
+
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    left: -9999px;
+}
+
+.file-input-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 1rem 2rem;
+    background: rgba(255,255,255,0.2);
+    border: 2px dashed rgba(255,255,255,0.5);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 250px;
+    justify-content: center;
+}
+
+.file-input-label:hover {
+    background: rgba(255,255,255,0.3);
+    border-color: rgba(255,255,255,0.8);
+    transform: translateY(-2px);
+}
+
+.upload-btn {
+    background: #fff;
+    color: #5a6fd6;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.documents-section h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.document-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s ease;
+}
+
+.document-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.doc-icon {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.doc-icon i {
+    font-size: 3rem;
+    color: #dc3545;
+}
+
+.doc-info h4 {
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    word-break: break-word;
+}
+
+.doc-date {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-chat, .btn-delete {
+    flex: 1;
+    text-align: center;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.btn-chat {
+    background: #28a745;
+    color: white;
+}
+
+.btn-chat:hover {
+    background: #218838;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .documents-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .upload-card {
+        padding: 1.5rem;
+    }
+    
+    .doc-actions {
+        flex-direction: column;
+    }
+    
+    .btn-chat, .btn-delete {
+        flex: none;
+    }
+}
+</style>
+
+<script>
+document.getElementById('pdf-file').addEventListener('change', function(e) {
+    const label = this.nextElementSibling;
+    const span = label.querySelector('span');
+    
+    if (e.target.files.length > 0) {
+        span.textContent = e.target.files[0].name;
+        label.style.borderColor = 'rgba(255,255,255,0.8)';
+        label.style.background = 'rgba(255,255,255,0.3)';
+    } else {
+        span.textContent = 'Chọn file PDF...';
+        label.style.borderColor = 'rgba(255,255,255,0.5)';
+        label.style.background = 'rgba(255,255,255,0.2)';
+    }
+});
+</script>
+{% endblock %} 

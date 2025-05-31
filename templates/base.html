@@ -419,6 +419,10 @@
                     <i class="fas fa-history"></i>
                     Lịch sử bài kiểm tra
                 </a>
+                <a href="{{ url_for('chatbot') }}" class="{% if request.endpoint in ['chatbot', 'chat_session'] %}active{% endif %}">
+                    <i class="fas fa-robot"></i>
+                    Chatbot AI
+                </a>
                 {% if session['role'] == 'teacher' %}
                     <a href="{{ url_for('create_quiz') }}" class="{% if request.endpoint == 'create_quiz' %}active{% endif %}">
                         <i class="fas fa-plus-circle"></i>
