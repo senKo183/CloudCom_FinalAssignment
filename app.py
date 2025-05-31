@@ -12,8 +12,10 @@ from sqlalchemy.exc import IntegrityError
 import random
 import string
 import re
+import secrets
 from werkzeug.utils import secure_filename
-
+import firebase_admin
+from firebase_admin import credentials, auth
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -26,6 +28,11 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+# Khởi tạo Firebase Admin SDK
+cred = credentials.Certificate("serviceAccountKey.json")  # Tải từ Firebase console
+firebase_admin.initialize_app(cred)
+
 # Models
 class User(db.Model):
     id = db.Column(db.Integer , primary_key=True)
@@ -135,13 +142,51 @@ def login():
             
             # Chuyển hướng dựa trên role
             if user.role == 'teacher':
-                return redirect(url_for('teacher_dashboard'))
+                return redirect(url_for('home'))
             else:
                 return redirect(url_for('home'))
         
         flash('Email hoặc mật khẩu không đúng!')
     return render_template('login.html')
 
+def generate_random_password(length=12):
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(secrets.choice(characters) for _ in range(length))
+
+@app.route('/firebase-login', methods=['POST'])
+def firebase_login():
+    data = request.get_json()
+    id_token = data.get('idToken')
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        email = decoded_token['email']
+        username_base = email.split('@')[0]
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            username = username_base
+            counter = 1
+            while User.query.filter_by(username=username).first():
+                username = f"{username_base}{counter}"
+                counter += 1
+            # Tạo mật khẩu ngẫu nhiên khi tạo user mới
+            random_password = generate_random_password()
+            user = User(email=email, username=username, password=random_password, role="student")
+            db.session.add(user)
+            db.session.commit()
+
+        session['user_id'] = user.id
+        session['username'] = user.username
+        session['role'] = user.role
+
+        return '', 200
+
+    except Exception as e:
+        print("Firebase login error:", e)
+        return '', 401
+    
+    
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -214,34 +259,33 @@ def page_not_found(e):
 
 @app.route('/teacher/dashboard')
 def teacher_dashboard():
-    if 'user_id' not in session or session['role'] != 'teacher':
+    if 'user_id' not in session or session.get('role') != 'teacher':
         flash('Bạn không có quyền truy cập trang này!')
         return redirect(url_for('home'))
-    
-    # Lấy thông tin thực tế từ database
+
     teacher_id = session['user_id']
-    
-    # Lấy tổng số bài kiểm tra của giáo viên
+    username = session.get('username', 'Giáo viên')  # 👈 Lấy tên người dùng từ session
+
+    # Thống kê
     total_quizzes = Quiz.query.filter_by(teacher_id=teacher_id).count()
-    
-    # Lấy số lượng học sinh đã tham gia các bài kiểm tra
+
     total_students = QuizResult.query.join(Quiz, QuizResult.quiz_id == Quiz.id)\
         .filter(Quiz.teacher_id == teacher_id)\
         .distinct(QuizResult.student_id)\
         .count()
-    
-    # Lấy 5 bài kiểm tra gần đây nhất
+
     recent_quizzes = Quiz.query.filter_by(teacher_id=teacher_id).order_by(Quiz.id.desc()).limit(5).all()
-    
-    # Lấy danh sách các bài kiểm tra đã hết hạn
+
     now = datetime.now()
     quizzes_expired = Quiz.query.filter_by(teacher_id=teacher_id).filter(Quiz.end_time < now).all()
-    
+
     return render_template('teacher_dashboard.html',
-                         total_quizzes=total_quizzes,
-                         total_students=total_students,
-                         recent_quizzes=recent_quizzes,
-                         quizzes_expired=quizzes_expired)
+                           username=username,  # 👈 Truyền tên người dùng vào template
+                           total_quizzes=total_quizzes,
+                           total_students=total_students,
+                           recent_quizzes=recent_quizzes,
+                           quizzes_expired=quizzes_expired)
+
 
 def generate_quiz_code():
     """Generate a random 4-character quiz code"""
@@ -1099,9 +1143,9 @@ def main():
     with app.app_context():
         # Chỉ tạo bảng nếu chưa tồn tại
         db.create_all()
-    port = int(os.environ.get('PORT', 8080)) # Lấy cổng từ biến môi trường PORT, mặc định là 8080
+    
+    port = 5000  # Cố định port 5000
     app.run(host='0.0.0.0', port=port, debug=False)
 
-
 if __name__ == "__main__":
-    main() 
+    main()

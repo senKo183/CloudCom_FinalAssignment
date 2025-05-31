@@ -3,218 +3,475 @@
 {% block title %}Kết Quả Bài Kiểm Tra{% endblock %}
 
 {% block content %}
-<div class="container results-container">
+<div class="results-container">
     <div class="results-card">
         <h1>Kết Quả Bài Kiểm Tra</h1>
         
         <div class="result-details">
             <div class="result-item">
-                <strong>  Tên bài kiểm tra:</strong> 
-                <span>{{ quiz.title }}</span>
+                <i class="fas fa-book"></i>
+                <div>
+                    <strong>Tên bài kiểm tra:</strong>
+                    <span>{{ quiz.title|safe }}</span>
+                </div>
             </div>
-            
-            <div class="result-item">
-                <strong>Điểm số:</strong> 
-                <span class="score">
-                    {{ score|round(2) }}/10 
-                    ({{ (score/10 * 100)|round(2) }}%)
-                </span>
-               
-
+            <div class="result-item score-item">
+                <i class="fas fa-star"></i>
+                <div class="score-wrapper">
+                    <svg class="progress-ring" width="80" height="80">
+                        <circle class="progress-ring__background" cx="40" cy="40" r="36"/>
+                        <circle class="progress-ring__circle" cx="40" cy="40" r="36" data-percent="{{ (score/10 * 100)|round(0) }}"/>
+                    </svg>
+                    <div class="score-text">
+                        <strong>Điểm số:</strong>
+                        <span class="score {% if score >= 3 %}score-high{% else %}score-low{% endif %}">
+                            {{ score|round(2) }}/10 ({{ (score/10 * 100)|round(2) }}%)
+                        </span>
+                    </div>
+                </div>
             </div>
-             
-            <div class="result-status">
-                {% if score >= 3 %}
-                    <div class="alert alert-success">Kết quả: Đạt</div>
-                {% else %}
-                    <div class="alert alert-danger">Kết quả: Không Đạt</div>
-                {% endif %}
+            <div class="result-item result-status">
+                <i class="fas {% if score >= 3 %}fa-trophy{% else %}fa-times-circle{% endif %}"></i>
+                <div>
+                    <strong>Kết quả:</strong>
+                    <span class="status-badge {% if score >= 3 %}status-pass{% else %}status-fail{% endif %}">
+                        {% if score >= 3 %}Đạt{% else %}Không Đạt{% endif %}
+                    </span>
+                </div>
             </div>
         </div>
 
         <div class="question-results">
             <h2>Chi Tiết Câu Trả Lời</h2>
-            <ul class="question-list">
+            <div class="question-list">
                 {% for question, user_answer, correct_answer, is_correct, question_type in results %}
-                <li class="question-item">
-                    <div class="question-text"><strong>{{ question|safe }}</strong></div>
-                    <div class="user-answer">
-                        Câu trả lời của bạn: 
-                        {% if question_type == 'multiple_choice' %}
-                            <strong>{{ user_answer|safe }}</strong>
-                        {% else %}
-                            <strong>{{ user_answer|safe }}</strong>
-                        {% endif %}
+                <div class="question-item">
+                    <div class="question-header">
+                        <div class="question-number">
+                            <span>Câu {{ loop.index }}</span>
+                        </div>
+                        <div class="question-text">{{ question|safe }}</div>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
                     </div>
-                    {% if is_correct %}
-                        <div class="correct">✅ Đúng</div>
-                    {% else %}
-                        <div class="incorrect">❌ Sai - Đáp án đúng: <strong>{{ correct_answer|safe }}</strong></div>
-                    {% endif %}
-                </li>
+                    <div class="question-content">
+                        <div class="answer-details">
+                            <div class="user-answer">
+                                <strong>Câu trả lời của bạn:</strong> {{ user_answer|safe }}
+                            </div>
+                            <div class="answer-status {% if is_correct %}correct{% else %}incorrect{% endif %}">
+                                {% if is_correct %}
+                                    <span>✅ Đúng</span>
+                                {% else %}
+                                    <span>❌ Sai - Đáp án đúng: {{ correct_answer|safe }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
 
         <div class="actions">
-            <a href="{{ url_for('home') }}" class="btn btn-primary">Về Trang Chủ</a>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> Về Trang Chủ
+            </a>
         </div>
     </div>
 </div>
 
 <style>
 .results-container {
-    max-width: 700px;
-    margin: 40px auto;
-    text-align: center;
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 .results-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    padding: 28px 18px 22px 18px;
-    border: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f7f9fc 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    border: 2px solid #d1d5db;
 }
 
 .results-card h1 {
-    color: #222;
-    font-size: 1.7rem;
-    margin-bottom: 14px;
-    font-weight: 600;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2d3748;
+    text-align: center;
+    margin: 0 0 1.5rem;
+    position: relative;
+}
+
+.results-card h1::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50%;
+    height: 4px;
+    background: #4b6ecc;
+    border-radius: 2px;
 }
 
 .result-details {
-    margin: 18px 0 12px 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
 }
 
 .result-item {
-    margin-bottom: 10px;
-    padding: 8px 0;
-    padding-left: 12px; 
-    background: #f7fafc;
-    border-radius: 4px;
-    font-size: 1.04rem;
-    text-align: right;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    color: #4a5568;
+    border: 2px solid #d1d5db;
+    transition: transform 0.2s;
+}
+
+.result-item:hover {
+    transform: translateY(-2px);
+}
+
+.result-item i {
+    color: #4b6ecc;
+    font-size: 1.25rem;
+}
+
+.result-item div {
+    flex: 1;
+}
+
+.score-item {
+    position: relative;
+    align-items: flex-start;
+}
+
+.score-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.progress-ring {
+    position: relative;
+}
+
+.progress-ring__background {
+    fill: none;
+    stroke: #e2e8f0;
+    stroke-width: 8;
+}
+
+.progress-ring__circle {
+    fill: none;
+    stroke: #0fc478;
+    stroke-width: 8;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dashoffset 1s ease;
+}
+
+.score-text {
+    flex: 1;
 }
 
 .score {
-    font-size: 1.15em;
-    color: #16a34a;
-    font-weight: bold;
+    font-size: 1.1rem;
+    font-weight: 600;
 }
 
-.result-status .alert {
-    margin: 14px 0 0 0;
-    padding: 8px 0;
-    padding-left: 12px; 
-    font-weight: 500;
-    border-radius: 5px;
-    font-size: 1.02rem;
+.score-high {
+    color: #0fc478;
 }
-.alert-success {
-    background: #e6fbe8;
-    color: #15803d;
-    border-left: 4px solid #22c55e;
+
+.score-low {
+    color: #ef4444;
 }
-.alert-danger {
-    background: #fee2e2;
-    color: #b91c1c;
-    border-left: 4px solid #ef4444;
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-pass {
+    background: #0fc478;
+    color: #ffffff;
+}
+
+.status-fail {
+    background: #ef4444;
+    color: #ffffff;
 }
 
 .question-results {
-    margin-top: 22px;
-    text-align: left;
+    margin-top: 2rem;
 }
 
 .question-results h2 {
-    color: #222;
-    font-size: 1.13rem;
-    margin-bottom: 12px;
+    font-size: 1.4rem;
+    color: #2d3748;
+    margin-bottom: 1rem;
     font-weight: 600;
 }
 
 .question-list {
-    list-style: none;
-    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .question-item {
-    background: #f3f4f6;
-    padding: 12px 10px 10px 10px;
-    margin: 10px 0;
-    border-radius: 6px;
-    text-align: left;
-    border-left: 4px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+    border: 2px solid #d1d5db;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.question-text {
-    font-size: 1.01rem;
-    color: #222;
-    margin-bottom: 5px;
-    font-weight: 500;
+
+.question-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
-.user-answer {
-    margin-bottom: 5px;
-    color: #444;
-    font-size: 0.98rem;
+
+.question-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
 }
-.correct {
-    color: #16a34a;
-    font-size: 1.01em;
-    font-weight: 500;
-}
-.incorrect {
-    color: #dc2626;
-    font-size: 1.01em;
-    font-weight: 500;
-}
-.actions {
-    margin-top: 22px;
-}
-.btn.btn-primary {
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 18px;
-    padding: 8px 22px;
+
+.question-number {
+    background: #4b6ecc;
+    color: #ffffff;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1rem;
-    font-weight: 500;
-    box-shadow: none;
-    transition: background 0.2s;
-    letter-spacing: 0.2px;
-    display: inline-block;
+    font-weight: 600;
+    margin-right: 1rem;
+    flex-shrink: 0;
 }
-.btn.btn-primary:hover {
-    background: #4338ca;
-    color: #fff;
+
+.question-text {
+    flex: 1;
+    font-size: 1.1rem;
+    color: #2d3748;
+    line-height: 1.6;
 }
-@media (max-width: 600px) {
+
+.toggle-icon {
+    color: #4b6ecc;
+    transition: transform 0.3s;
+}
+
+.toggle-icon.active {
+    transform: rotate(180deg);
+}
+
+.question-content {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 1.5rem;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.question-content.active {
+    max-height: 500px;
+    padding: 1rem 1.5rem 1.5rem;
+}
+
+.answer-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.user-answer {
+    font-size: 0.95rem;
+    color: #4a5568;
+}
+
+.user-answer strong {
+    color: #2d3748;
+}
+
+.answer-status {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.answer-status.correct {
+    background: #e6fbe8;
+    color: #15803d;
+}
+
+.answer-status.incorrect {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.9rem 2rem;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, #4b6ecc 60%, #6b7280 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(75, 110, 204, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(75, 110, 204, 0.4);
+}
+
+@media (max-width: 1024px) {
+    .results-container {
+        padding: 0 1rem;
+    }
+
     .results-card {
-        padding: 8px 2vw 12px 2vw;
+        padding: 1.5rem;
     }
+
     .result-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
+        padding: 0.75rem;
+        font-size: 0.9rem;
     }
-    .question-item {
-        padding: 8px 4px 7px 7px;
+}
+
+@media (max-width: 768px) {
+    .results-card h1 {
+        font-size: 1.5rem;
+    }
+
+    .result-details {
+        grid-template-columns: 1fr;
+    }
+
+    .progress-ring {
+        width: 60px;
+        height: 60px;
+    }
+
+    .progress-ring__background,
+    .progress-ring__circle {
+        cx: 30;
+        cy: 30;
+        r: 26;
+    }
+
+    .question-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .question-content.active {
+        padding: 0.75rem 1rem 1rem;
+    }
+
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 </style>
-<script type="text/javascript">
-    MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']]
-      },
-      svg: {
-        fontCache: 'global'
-      }
-    };
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+<script>
+// Progress ring animation
+document.addEventListener('DOMContentLoaded', () => {
+    const circles = document.querySelectorAll('.progress-ring__circle');
+    circles.forEach(circle => {
+        const percent = circle.getAttribute('data-percent');
+        const radius = circle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        circle.style.strokeDasharray = circumference;
+        const offset = circumference - (percent / 100) * circumference;
+        circle.style.strokeDashoffset = offset;
+    });
+});
+
+// Collapsible question cards
+document.querySelectorAll('.question-header').forEach(header => {
+    header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        const icon = header.querySelector('.toggle-icon');
+        content.classList.toggle('active');
+        icon.classList.toggle('active');
+    });
+});
+
+// Wait for MathJax to load
+function waitForMathJax() {
+    return new Promise((resolve) => {
+        if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+            window.MathJax.startup.promise.then(() => resolve());
+        } else {
+            const mathJaxScript = document.querySelector('script[src*="mathjax"]');
+            if (mathJaxScript) {
+                mathJaxScript.addEventListener('load', () => resolve());
+            } else {
+                resolve();
+            }
+        }
+    });
+}
+
+// Configure MathJax
+window.MathJax = {
+    tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    },
+    svg: { fontCache: 'global' }
+};
+
+// Initialize MathJax rendering
+document.addEventListener('DOMContentLoaded', async function() {
+    await waitForMathJax();
+    if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+        try {
+            await window.MathJax.typesetPromise();
+        } catch (err) {
+            console.error('MathJax typesetting failed:', err);
+        }
+    }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 {% endblock %}
